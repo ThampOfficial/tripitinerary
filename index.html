@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script src="config.js"></script><script src="standalone.js"></script></head><body>
 <title>ทริปด้วยกัน</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -113,6 +113,8 @@ a.btn{text-decoration:none;color:inherit}
 .leg .sp{flex:1}
 @media (max-width:440px){.leg{padding-left:14px}}
 .rwrap{display:flex;flex-direction:column;gap:4px}
+.gmap{position:relative;aspect-ratio:16/10;max-width:100%;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--soft)}
+.gmap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .rmap{width:100%;height:auto;display:block;border-radius:14px;background:var(--soft);border:1px solid var(--line)}
 .rmap .grid{stroke:var(--line);stroke-width:1}
 .rmap .seg{stroke:var(--accent);stroke-width:3;stroke-linecap:round}
@@ -358,16 +360,19 @@ async function uploadFile(file){
   if((type||'').startsWith('image/')){const d=await compress(file);const id=gid();
     await S.db.doc(`trips/${S.tripId}/blobs/${id}`).set({d,name:file.name});return{k:'d',id,name:file.name,type:'image/jpeg'}}
   throw{code:'no_assets'};}
-function fileSrc(f){return f.k==='a'?'/_blob/'+f.id:(S.blobCache[f.id]||'')}
+const SA=!!window.TRIP_STANDALONE;
+const blobUrl=id=>window.TRIP_BLOB_URL?window.TRIP_BLOB_URL(id):'/_blob/'+id;
+const fileUrl=id=>window.TRIP_FILE_URL?window.TRIP_FILE_URL(id):'/_blob/'+id;
+function fileSrc(f){return f.k==='a'?blobUrl(f.id):(S.blobCache[f.id]||'')}
 async function hydrateBlobs(root){
   for(const im of root.querySelectorAll('img[data-blob]')){const id=im.dataset.blob;if(S.blobCache[id]){im.src=S.blobCache[id];continue}
     try{const s=await S.db.doc(`trips/${S.tripId}/blobs/${id}`).get();if(s.exists){S.blobCache[id]=s.data().d;im.src=S.blobCache[id]}}catch(e){}}}
 function thumbHTML(f,i,removable){
   const img=(f.type||'').startsWith('image/');const ext=(f.name||'').split('.').pop().slice(0,4).toUpperCase()||'FILE';
-  const inner=img?(f.k==='a'?`<img loading="lazy" alt="${esc(f.name)}" src="/_blob/${esc(f.id)}">`:`<img alt="${esc(f.name)}" data-blob="${esc(f.id)}">`)
+  const inner=img?(f.k==='a'?`<img loading="lazy" alt="${esc(f.name)}" src="${esc(blobUrl(f.id))}">`:`<img alt="${esc(f.name)}" data-blob="${esc(f.id)}">`)
     :`<span class="ft">${esc(ext)}<br>${esc((f.name||'').slice(0,18))}</span>`;
   const open=img?`<button type="button" class="thumb" data-open="${i}" title="${esc(f.name)}">${inner}</button>`
-    :`<a class="thumb" href="/_blob/${esc(f.id)}" target="_blank" rel="noopener" title="${esc(f.name)}">${inner}</a>`;
+    :`<a class="thumb" href="${esc(fileUrl(f.id))}" target="_blank" rel="noopener" title="${esc(f.name)}">${inner}</a>`;
   return removable?`<span style="position:relative;display:inline-block">${open}<button type="button" class="x" data-rm="${i}" aria-label="ลบไฟล์" style="position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff">×</button></span>`:open;}
 function filesView(files){if(!files||!files.length)return'';return `<div class="files" data-files>${files.map((f,i)=>thumbHTML(f,i,false)).join('')}</div>`}
 function wireFiles(root,files){root.querySelectorAll('[data-open]').forEach(b=>b.onclick=e=>{e.stopPropagation();const f=files[+b.dataset.open];lightbox(fileSrc(f),f.name)});hydrateBlobs(root)}
@@ -387,7 +392,7 @@ function attachWidget(host,files){
       draw();};};
   draw();}
 /* reference photos with captions (places) */
-const imgTag=(f,alt)=>f.k==='a'?`<img loading="lazy" alt="${esc(alt||'')}" src="/_blob/${esc(f.id)}">`:`<img alt="${esc(alt||'')}" data-blob="${esc(f.id)}">`;
+const imgTag=(f,alt)=>f.k==='a'?`<img loading="lazy" alt="${esc(alt||'')}" src="${esc(blobUrl(f.id))}">`:`<img alt="${esc(alt||'')}" data-blob="${esc(f.id)}">`;
 function photoWidget(host,photos){
   const draw=()=>{host.innerHTML=`<div class="pgrid">${photos.map((f,i)=>`<div class="pcell"><div class="pimg">${imgTag(f)}<button type="button" class="pdel" data-rm="${i}" aria-label="ลบรูป">×</button></div>
       <input class="inp pcap" id="pcap-${i}" data-cap="${i}" value="${esc(f.cap||'')}" placeholder="คำอธิบายรูป"></div>`).join('')}
@@ -420,13 +425,15 @@ function routeUrl(list){if(list.length<2)return navUrl(list[0]);const o=list[0],
 const hasLoc=p=>p&&p.lat!=null&&p.lat!==''&&p.lng!=null&&p.lng!=='';
 function hav(a,b){const R=6371,r=x=>x*Math.PI/180;const dLa=r(b.lat-a.lat),dLo=r(b.lng-a.lng);const h=Math.sin(dLa/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h))}
 const isSet=v=>v!=null&&v!=='';
+const pairKey=(a,b)=>ptQ(a)+'>'+ptQ(b);
 function legOf(prev,p){if(p.legFrom===prev.id&&(isSet(p.legKm)||isSet(p.legMin)))return{km:p.legKm,min:p.legMin,manual:true};
+  const A=S.autoLegs&&S.autoLegs[pairKey(prev,p)];if(A&&A.ok)return{km:A.m/1000,min:Math.round(A.s/60),manual:false,auto:true};
   if(hasLoc(prev)&&hasLoc(p)){const d=hav(prev,p)*1.3;return{km:d,min:Math.round(d/45*60+5),manual:false}}return null}
 const kmTxt=k=>(+k).toLocaleString('th-TH',{maximumFractionDigits:+k<10?1:0})+' กม.';
 const minTxt=m=>{m=Math.round(+m);if(m<60)return m+' นาที';const h=Math.floor(m/60),r=m%60;return h+' ชม.'+(r?' '+r+' นาที':'')};
 const legUrl=(a,b)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(ptQ(a))+'&destination='+encodeURIComponent(ptQ(b));
 function legRow(prev,p){const L=legOf(prev,p);
-  const txt=L?`<span>${L.manual?'':'≈ '}${isSet(L.km)?'<b>'+kmTxt(L.km)+'</b>':''}${isSet(L.km)&&isSet(L.min)?' · ':''}${isSet(L.min)?'<b>'+minTxt(L.min)+'</b>':''}${L.manual?'':' (ประมาณจากพิกัด)'}</span>`:'<span>ยังไม่ได้ใส่ระยะทาง</span>';
+  const txt=L?`<span>${L.manual||L.auto?'':'≈ '}${isSet(L.km)?'<b>'+kmTxt(L.km)+'</b>':''}${isSet(L.km)&&isSet(L.min)?' · ':''}${isSet(L.min)?'<b>'+minTxt(L.min)+'</b>':''}${L.manual?'':L.auto?' (Google Maps)':' (ประมาณจากพิกัด)'}</span>`:'<span>ยังไม่ได้ใส่ระยะทาง</span>';
   return `<div class="leg" data-leg="${esc(p.id)}" data-prev="${esc(prev.id)}"><span class="ln"></span>${txt}<span class="sp"></span><a class="btn sm" href="${esc(legUrl(prev,p))}" target="_blank" rel="noopener">ดูใน Google Maps</a><button class="btn sm" data-legedit>${L&&L.manual?'แก้ไข':'ใส่ระยะทาง'}</button></div>`}
 function legSheet(prev,p){const own=p.legFrom===prev.id;const m=own&&isSet(p.legMin)?Math.round(+p.legMin):null;
   openSheet('ระยะทางและเวลาเดินทาง',`<p style="margin:0"><strong>${esc(prev.name)}</strong> → <strong>${esc(p.name)}</strong></p>
@@ -636,7 +643,7 @@ function routeMapSVG(arr,hl){
   let g='';for(let x=40;x<W;x+=60)g+=`<line class="grid" x1="${x}" y1="0" x2="${x}" y2="${H}"/>`;for(let y=30;y<H;y+=60)g+=`<line class="grid" x1="0" y1="${y}" x2="${W}" y2="${y}"/>`;
   let seg='',kml='';
   for(let j=1;j<pts.length;j++){const a=pts[j-1],b=pts[j],[x1,y1]=xy[j-1],[x2,y2]=xy[j];
-    const L=b.i===a.i+1?legOf(a.p,b.p):null,km=L&&isSet(L.km)?+L.km:hav(a.p,b.p)*1.3,man=!!(L&&L.manual);
+    const L=b.i===a.i+1?legOf(a.p,b.p):null,km=L&&isSet(L.km)?+L.km:hav(a.p,b.p)*1.3,man=!!(L&&(L.manual||L.auto));
     seg+=`<line class="seg${man?'':' est'}" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
     if(Math.hypot(x2-x1,y2-y1)>70)kml+=`<text class="km" x="${((x1+x2)/2).toFixed(1)}" y="${((y1+y2)/2-6).toFixed(1)}" text-anchor="middle">${man?'':'≈'}${esc(kmTxt(km))}</text>`}
   const pins=pts.map((o,j)=>{const [x,y]=xy[j],right=x<W-140,nm=o.p.name.length>14?o.p.name.slice(0,13)+'…':o.p.name,isH=hl&&o.p.id===hl;
@@ -645,7 +652,10 @@ function routeMapSVG(arr,hl){
   const kmPx=111.32/sc,nice=[.1,.2,.5,1,2,5,10,20,50,100,200,500,1000].find(k=>k/kmPx>=60)||1000,bl=nice/kmPx;
   const scale=`<line class="sbar" x1="16" y1="${H-16}" x2="${(16+bl).toFixed(1)}" y2="${H-16}"/><text class="km" x="16" y="${H-22}">${nice<1?nice*1000+' ม.':nice+' กม.'}</text><text class="km" x="${W-16}" y="22" text-anchor="end">N ↑</text>`;
   return `<svg class="rmap" viewBox="0 0 ${W} ${H}" role="img" aria-label="ผังเส้นทาง ${pts.length} จุด">${g}${seg}${kml}${pins}${scale}</svg>`}
-function rmapBlock(arr,hl){const svg=routeMapSVG(arr,hl);if(!svg)return'';const miss=arr.filter(p=>!hasLoc(p)).length;
+function gmapEmbed(arr){const q=arr.map(ptQ).filter(Boolean).slice(0,12);if(!q.length)return'';
+  return q.length===1?'https://maps.google.com/maps?q='+encodeURIComponent(q[0])+'&z=14&output=embed':'https://maps.google.com/maps?saddr='+encodeURIComponent(q[0])+'&daddr='+q.slice(1).map(encodeURIComponent).join('+to:')+'&output=embed'}
+function rmapBlock(arr,hl){if(SA){const u=gmapEmbed(arr);if(!u)return'';return `<div class="rwrap"><div class="gmap"><iframe loading="lazy" src="${esc(u)}" title="แผนที่ Google"></iframe></div>${routeMapSVG(arr,hl)?'':''}</div>`}
+  const svg=routeMapSVG(arr,hl);if(!svg)return'';const miss=arr.filter(p=>!hasLoc(p)).length;
   return `<div class="rwrap">${svg}<div class="hint">ผังจากพิกัดของแต่ละจุด เส้นประคือระยะประมาณ${miss?` · ${miss} จุดยังไม่มีพิกัด จึงไม่อยู่ในผัง`:''}</div></div>`}
 
 /* ---------- PLAN ---------- */
@@ -656,17 +666,17 @@ function renderPlan(v){
   const keys=[...days.filter(d=>groups[d]),...(groups['']?['']:[])];
   const counts={};S.places.forEach(p=>counts[p.cat]=(counts[p.cat]||0)+1);
   v.innerHTML=`<div class="spread"><div><span class="eyebrow">แผนเที่ยว</span><h2 style="font-size:22px">${S.places.length} จุด · ${days.length} วัน</h2></div>
-    <div class="row"><button class="btn" id="aiB">${I_ai}AI ช่วยวางแผน</button><button class="btn" id="pdfB">${I.doc}PDF</button><button class="btn pri" id="addP">${I.plus}เพิ่มสถานที่</button></div></div>
+    <div class="row">${SA?'':`<button class="btn" id="aiB">${I_ai}AI ช่วยวางแผน</button>`}<button class="btn" id="pdfB">${I.doc}PDF</button><button class="btn pri" id="addP">${I.plus}เพิ่มสถานที่</button></div></div>
    <div class="chips"><button class="chip" data-f="all" aria-pressed="${S.placeFilter==='all'}">ทั้งหมด</button>
     ${cats.map(c=>`<button class="chip" data-f="${esc(c.id)}" aria-pressed="${S.placeFilter===c.id}"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}${counts[c.id]?` <span class="muted num">${counts[c.id]}</span>`:''}</button>`).join('')}</div>
-   ${!S.places.length?`<div class="card empty">${I.pin}<strong>ยังไม่มีสถานที่ในแผน</strong><span>เพิ่มจุดเที่ยว ที่พัก หรือที่จอดรถเอง หรือกด "AI ช่วยวางแผน" ให้จัดที่เที่ยวยอดนิยมพร้อมเวลามาให้ก่อน แล้วค่อยแก้ทีหลัง</span></div>`:''}
+   ${!S.places.length?`<div class="card empty">${I.pin}<strong>ยังไม่มีสถานที่ในแผน</strong><span>เพิ่มจุดเที่ยว ที่พัก หรือที่จอดรถเอง ${SA?'วางลิงก์ Google Maps หรือพิกัด แล้วแอปจะแสดงแผนที่และระยะทางให้':'หรือกด "AI ช่วยวางแผน" ให้จัดที่เที่ยวยอดนิยมพร้อมเวลามาให้ก่อน แล้วค่อยแก้ทีหลัง'}</span></div>`:''}
    ${S.places.length&&!list.length?`<div class="empty">ไม่มีสถานที่ในหมวดนี้</div>`:''}
    ${keys.map(k=>{const arr=groups[k].sort(sortFor(k));const idx=days.indexOf(k);const showLegs=S.placeFilter==='all';let tk=0,tm=0,est=false,anyLeg=false;
-     if(showLegs)for(let i=1;i<arr.length;i++){const L=legOf(arr[i-1],arr[i]);if(L){anyLeg=true;tk+=+L.km||0;tm+=+L.min||0;if(!L.manual)est=true}}
+     if(showLegs)for(let i=1;i<arr.length;i++){const L=legOf(arr[i-1],arr[i]);if(L){anyLeg=true;tk+=+L.km||0;tm+=+L.min||0;if(!L.manual&&!L.auto)est=true}}
      return `<section class="day"><div class="day-h">${k?`<span class="day-n">วันที่ ${idx+1}</span><h3>${esc(dlabel(k,{weekday:'long',day:'numeric',month:'short'}))}</h3>`:`<h3>ยังไม่กำหนดวัน</h3>`}
        ${anyLeg?`<span class="daytot">${est?'≈ ':''}รวม <b>${kmTxt(tk)}</b> · <b>${minTxt(tm)}</b></span>`:''}
        ${isManual(k)&&arr.length>1&&showLegs?`<button class="btn sm" data-tsort="${esc(k)}" title="ตอนนี้เรียงตามที่จัดเอง">เรียงตามเวลา</button>`:''}
-       ${showLegs&&arr.some(hasLoc)?`<button class="btn sm" data-rmap="${esc(k)}">${S.mapHide[dkey(k)]?'ดูผังเส้นทาง':'ซ่อนผัง'}</button>`:''}
+       ${showLegs&&(SA?arr.length:arr.some(hasLoc))?`<button class="btn sm" data-rmap="${esc(k)}">${S.mapHide[dkey(k)]?(SA?'ดูแผนที่':'ดูผังเส้นทาง'):(SA?'ซ่อนแผนที่':'ซ่อนผัง')}</button>`:''}
        ${arr.length>1?`<a class="btn sm" href="${esc(routeUrl(arr))}" target="_blank" rel="noopener">${I.route}เส้นทางทั้งวัน</a>`:''}</div>
        ${showLegs&&!S.mapHide[dkey(k)]?rmapBlock(arr):''}
        <div class="card">${arr.map((p,i)=>{const c=catOf(cats,p.cat);return `${showLegs&&i>0?legRow(arr[i-1],p):''}<div class="stop" data-pid="${esc(p.id)}"><div class="time">${esc(p.time||'—')}</div><div style="min-width:0">
@@ -689,10 +699,17 @@ function renderPlan(v){
     const fh=row.querySelector('[data-files]');if(fh)wireFiles(fh,p.files);
     const gh=row.querySelector('[data-gal]');if(gh)wireGallery(gh,p.photos)});
   v.querySelector('#pdfB').onclick=pdfSheet;
+  if(SA&&S.placeFilter==='all')keys.forEach(k=>fetchLegs(groups[k]));
   v.querySelectorAll('[data-tsort]').forEach(b=>b.onclick=()=>setManual(b.dataset.tsort,false).then(ok=>ok&&toast('เรียงตามเวลาแล้ว')));
   v.querySelectorAll('[data-rmap]').forEach(b=>b.onclick=()=>{const k=dkey(b.dataset.rmap);S.mapHide[k]=!S.mapHide[k];render()});
-  v.querySelector('#aiB').onclick=aiSheet;
+  const aiB=v.querySelector('#aiB');if(aiB)aiB.onclick=aiSheet;
 }
+S.autoLegs={};S.legPending={};
+function fetchLegs(arr){if(!window.TRIP_ROUTE||!arr||arr.length<2)return;
+  const need=[];for(let i=1;i<arr.length;i++){const k=pairKey(arr[i-1],arr[i]);if(!S.autoLegs[k]&&!S.legPending[k]&&ptQ(arr[i-1])&&ptQ(arr[i]))need.push([arr[i-1],arr[i],k])}
+  if(!need.length)return;need.forEach(n=>S.legPending[n[2]]=1);
+  window.TRIP_ROUTE(need.map(n=>[ptQ(n[0]),ptQ(n[1])]),'driving').then(legs=>{need.forEach((n,i)=>{S.autoLegs[n[2]]=legs[i]||{ok:false}})})
+    .catch(()=>{}).finally(()=>{need.forEach(n=>delete S.legPending[n[2]]);if(S.tab==='plan'&&!document.querySelector('#sheet'))render()})}
 async function movePlace(p,dir,arr){
   const i=arr.findIndex(x=>x.id===p.id),j=i+dir;if(j<0||j>=arr.length)return;
   const re=arr.slice();[re[i],re[j]]=[re[j],re[i]];
@@ -715,7 +732,7 @@ function placeSheet(p){
     f.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{cat=b.dataset.c;f.querySelectorAll('[data-c]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
     const pl=f.querySelector('#pl'),plh=f.querySelector('#plh');
     const chk=()=>{const v=pl.value.trim();if(!v){plh.className='hint';plh.textContent='กด "แชร์" ใน Google Maps แล้วคัดลอกลิงก์มาวาง';return}
-      const g=parseLoc(v);if(g.lat!=null){plh.className='hint ok';plh.textContent=`พบพิกัด ${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}`}else if(/^https?:/.test(v)){plh.className='hint';plh.textContent='บันทึกลิงก์ไว้ เปิดได้จากปุ่มแผนที่ (ลิงก์ย่อจะไม่มีพิกัดสำหรับเส้นทาง จะใช้ชื่อสถานที่แทน)'}else{plh.className='hint err';plh.textContent='ไม่ใช่ลิงก์หรือพิกัด'}};
+      const g=parseLoc(v);if(g.lat!=null){plh.className='hint ok';plh.textContent=`พบพิกัด ${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}`}else if(/^https?:/.test(v)){plh.className='hint';plh.textContent=SA?'บันทึกลิงก์ไว้ ตอนกดบันทึก แอปจะอ่านตำแหน่งจากลิงก์ให้':'บันทึกลิงก์ไว้ เปิดได้จากปุ่มแผนที่ (ลิงก์ย่อจะไม่มีพิกัดสำหรับเส้นทาง จะใช้ชื่อสถานที่แทน)'}else{plh.className='hint err';plh.textContent='ไม่ใช่ลิงก์หรือพิกัด'}};
     const drawPm=()=>{const g=parseLoc(pl.value.trim()),day=f.querySelector('#pd').value,t=f.querySelector('#pt').value;
       const cand={...(p||{}),id:p?.id||'_new',name:f.querySelector('#pn').value.trim()||'จุดนี้',lat:g.lat??null,lng:g.lng??null,time:t,day};
       if(!hasLoc(cand)){f.querySelector('#pmap').innerHTML='';return}
@@ -730,7 +747,8 @@ function placeSheet(p){
     if(p)f.querySelector('#del').onclick=()=>confirmBox(`ลบ "${p.name}" ออกจากแผน?`,'ลบ',async()=>{try{await S.db.doc(`trips/${S.tripId}/places/${p.id}`).delete();cleanupFiles([...(p.files||[]),...(p.photos||[])],[]);toast('ลบแล้ว')}catch(e){writeErr(e)}});
     f.querySelector('#ok').onclick=async()=>{
       const name=f.querySelector('#pn').value.trim();if(!name){f.querySelector('#pn').focus();return}
-      const raw=pl.value.trim(),g=parseLoc(raw);
+      const raw=pl.value.trim();let g=parseLoc(raw);
+      if(g.lat==null&&/^https?:\/\//.test(raw)&&window.TRIP_RESOLVE){f.querySelector('#ok').disabled=true;try{const r=await window.TRIP_RESOLVE(raw);if(r&&r.lat!=null)g={lat:r.lat,lng:r.lng}}catch(e){}f.querySelector('#ok').disabled=false}
       const day=f.querySelector('#pd').value;
       const data={name,cat:cat||'',day,time:f.querySelector('#pt').value,url:/^https?:\/\//.test(raw)?raw:'',lat:g.lat??null,lng:g.lng??null,
         address:f.querySelector('#pa').value.trim(),desc:f.querySelector('#pdesc').value.trim(),note:f.querySelector('#pnote').value.trim(),
@@ -843,7 +861,7 @@ function ptext(ctx,draw,str,x,y,maxW,size,weight,fam,color,lh,maxLines){ctx.font
   return lines.length*lh}
 function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
 function loadImage(src){return new Promise(res=>{if(!src)return res(null);const im=new Image();im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
-async function blobSrc(f){if(f.k==='a')return '/_blob/'+f.id;if(S.blobCache[f.id])return S.blobCache[f.id];
+async function blobSrc(f){if(f.k==='a'){if(window.TRIP_FETCH_DATAURL){try{return await window.TRIP_FETCH_DATAURL(f.id)}catch(e){return ''}}return '/_blob/'+f.id}if(S.blobCache[f.id])return S.blobCache[f.id];
   try{const s=await S.db.doc(`trips/${S.tripId}/blobs/${f.id}`).get();if(s.exists){S.blobCache[f.id]=s.data().d;return S.blobCache[f.id]}}catch(e){}return ''}
 function drawCover(ctx,im,x,y,w,h,r){const s=Math.max(w/im.naturalWidth,h/im.naturalHeight),dw=im.naturalWidth*s,dh=im.naturalHeight*s;
   ctx.save();rrect(ctx,x,y,w,h,r);ctx.clip();ctx.drawImage(im,x+(w-dw)/2,y+(h-dh)/2,dw,dh);ctx.restore()}
@@ -890,7 +908,7 @@ async function buildPdf(opt,progress){
     if(d){ctx.fillStyle=PC.line;ctx.fillRect(x,y0+h,CW,2)}h+=36;return h});
   const TX=PM,BX=PM+150,BW=CW-150;
   for(const k of keys){const arr=groups[k].sort(sortFor(k)),idx=days.indexOf(k);
-    let tk=0,tm=0,est=false,anyLeg=false;for(let i=1;i<arr.length;i++){const L=legOf(arr[i-1],arr[i]);if(L){anyLeg=true;tk+=+L.km||0;tm+=+L.min||0;if(!L.manual)est=true}}
+    let tk=0,tm=0,est=false,anyLeg=false;for(let i=1;i<arr.length;i++){const L=legOf(arr[i-1],arr[i]);if(L){anyLeg=true;tk+=+L.km||0;tm+=+L.min||0;if(!L.manual&&!L.auto)est=true}}
     const dayHead=(d,y0)=>{let h=24;const pill=k?`วันที่ ${idx+1}`:'ยังไม่กำหนดวัน';ctx.font=`600 24px ${FB}`;const pw=ctx.measureText(pill).width+32;
       if(d){ctx.fillStyle=PC.ink;rrect(ctx,PM,y0+h,pw,44,8);ctx.fill();ctx.fillStyle='#fff';ctx.textBaseline='middle';ctx.fillText(pill,PM+16,y0+h+23)}
       const dh=k?ptext(ctx,d,dlabel(k,{weekday:'long',day:'numeric',month:'long',year:'numeric'}),PM+pw+20,y0+h-6,CW-pw-20,36,600,FD,PC.ink,52):44;
@@ -898,7 +916,7 @@ async function buildPdf(opt,progress){
       if(anyLeg)h+=ptext(ctx,d,`${est?'≈ ':''}เดินทางรวม ${kmTxt(tk)} · ${minTxt(tm)}`,PM,y0+h,CW,22,600,FB,PC.muted)+4;
       if(d){ctx.fillStyle=PC.ink;ctx.fillRect(PM,y0+h+6,CW,3)}h+=24;return h};
     const stopBlock=i=>(d,y0)=>{const p=arr[i],c=catOf(cats,p.cat),L=i>0?legOf(arr[i-1],p):null;let h=0;
-      if(L){const s=`↓ ${L.manual?'':'≈ '}${isSet(L.km)?kmTxt(L.km):''}${isSet(L.km)&&isSet(L.min)?' · ':''}${isSet(L.min)?minTxt(L.min):''} จากจุดก่อนหน้า`;
+      if(L){const s=`↓ ${L.manual||L.auto?'':'≈ '}${isSet(L.km)?kmTxt(L.km):''}${isSet(L.km)&&isSet(L.min)?' · ':''}${isSet(L.min)?minTxt(L.min):''} จากจุดก่อนหน้า`;
         h+=ptext(ctx,d,s,BX,y0+h,BW,21,600,FB,PC.accent)+6}
       const top=y0+h;
       if(p.time)ptext(ctx,d,p.time,TX,top+4,140,28,600,FM,PC.ink);
@@ -1138,7 +1156,7 @@ function renderSettings(v){
   v.innerHTML=`<div class="card pad stack"><div class="spread"><div><span class="eyebrow">ชวนเพื่อนเข้าทริป</span><h3 style="font-size:17px">รหัสเชิญ</h3></div><button class="btn sm" id="regen">สร้างรหัสใหม่</button></div>
      <div class="code-big" id="code">${esc(t.inviteCode)}</div>
      <button class="btn pri" id="cpInv">${I.copy}คัดลอกข้อความชวนเพื่อน</button>
-     <p class="hint" style="margin:0">ส่งข้อความนี้ทาง LINE หรือแชทไหนก็ได้ เพื่อนต้องเปิดหน้านี้ได้ด้วย: กดปุ่ม Share ของหน้านี้ใน Claude แล้วเชิญเพื่อนเป็น Contributor หรือเปิดลิงก์ให้ใช้งานได้ จากนั้นเพื่อนกด "เข้าร่วมด้วยรหัส" แล้วใส่รหัสนี้</p></div>
+     <p class="hint" style="margin:0">ส่งข้อความนี้ทาง LINE หรือแชทไหนก็ได้ ${SA?'เพื่อนกดลิงก์ในข้อความแล้วเลือกชื่อตัวเองได้เลย ไม่ต้องล็อกอิน':'เพื่อนต้องเปิดหน้านี้ได้ด้วย: กดปุ่ม Share ของหน้านี้ใน Claude แล้วเชิญเพื่อนเป็น Contributor หรือเปิดลิงก์ให้ใช้งานได้ จากนั้นเพื่อนกด "เข้าร่วมด้วยรหัส" แล้วใส่รหัสนี้'}</p></div>
    <div class="section-h"><h2>ข้อมูลทริป</h2></div>
    <div class="card pad stack"><div class="field"><label for="sn">ชื่อทริป</label><input class="inp" id="sn" value="${esc(t.name)}"></div>
      <div class="grid2"><div class="field"><label for="ss">วันเริ่ม</label><input class="inp" type="date" id="ss" value="${esc(t.start||'')}"></div><div class="field"><label for="se">วันกลับ</label><input class="inp" type="date" id="se" value="${esc(t.end||'')}"></div></div>
@@ -1159,9 +1177,10 @@ function renderSettings(v){
    ${catBlock('place','หมวดหมู่สถานที่',placeCats(),id=>{const n=S.places.filter(p=>p.cat===id).length;return n?n+' จุด':''})}
    ${catBlock('exp','หมวดหมู่ค่าใช้จ่าย',expCats(),id=>{const n=S.expenses.filter(e=>e.cat===id).length;return n?n+' รายการ':''})}
    <div class="section-h"><h2>จัดการทริป</h2></div>
-   <div class="card pad row">${isCreator?`<button class="btn danger" id="delTrip">ลบทริปนี้</button>`:`<button class="btn danger" id="leave">ออกจากทริป</button>`}<span class="hint">ข้อมูลทริปเปิดดูได้โดยทุกคนที่เปิดหน้านี้ได้ แชร์หน้านี้เฉพาะเพื่อนร่วมทริป</span></div>`;
+   <div class="card pad row">${isCreator?`<button class="btn danger" id="delTrip">ลบทริปนี้</button>`:`<button class="btn danger" id="leave">ออกจากทริป</button>`}${SA?`<button class="btn" id="resetApi">เปลี่ยน Google Sheet ที่เชื่อมไว้</button><span class="hint">ทุกคนที่มีลิงก์เชิญหรือรหัสเปิดทริปนี้ได้ ส่งเฉพาะเพื่อนร่วมทริป</span>`:`<span class="hint">ข้อมูลทริปเปิดดูได้โดยทุกคนที่เปิดหน้านี้ได้ แชร์หน้านี้เฉพาะเพื่อนร่วมทริป</span>`}</div>`;
   const q=s=>v.querySelector(s);
-  q('#cpInv').onclick=()=>copyText(`มาร่วมทริป "${t.name}" (${dlabel(t.start,{day:'numeric',month:'short'})} – ${dlabel(t.end,{day:'numeric',month:'short'})}) กัน\nเปิดแอป "ทริปด้วยกัน" ใน Claude กด "เข้าร่วมด้วยรหัส" แล้วใส่รหัส ${t.inviteCode}`);
+  const ra=q('#resetApi');if(ra)ra.onclick=()=>confirmBox('เลิกเชื่อม Google Sheet นี้บนเครื่องนี้ แล้วใส่ URL ใหม่?','เปลี่ยน',()=>window.TRIP_RESET_API());
+  q('#cpInv').onclick=()=>copyText(`มาร่วมทริป "${t.name}" (${dlabel(t.start,{day:'numeric',month:'short'})} – ${dlabel(t.end,{day:'numeric',month:'short'})}) กัน\n${SA?`กดลิงก์นี้แล้วเลือกชื่อตัวเอง\n${location.origin+location.pathname}#join-${t.inviteCode}\n(รหัสเชิญ ${t.inviteCode})`:`เปิดแอป "ทริปด้วยกัน" ใน Claude กด "เข้าร่วมด้วยรหัส" แล้วใส่รหัส ${t.inviteCode}`}`);
   q('#regen').onclick=()=>confirmBox('สร้างรหัสใหม่? รหัสเดิมจะใช้เข้าร่วมไม่ได้อีก คนที่อยู่ในทริปแล้วไม่ได้รับผลกระทบ','สร้างรหัสใหม่',()=>saveTrip({inviteCode:code6()}));
   q('#saveInfo').onclick=async()=>{const name=q('#sn').value.trim();if(!name)return;let s=q('#ss').value,e=q('#se').value||s;if(e<s)e=s;if(await saveTrip({name,start:s,end:e,fundHolder:q('#sh').value||null}))toast('บันทึกแล้ว')};
   const curs=()=>(t.currencies||[]).map(c=>({...c}));
