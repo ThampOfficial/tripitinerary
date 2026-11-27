@@ -1,3 +1,5 @@
+<img src="icons/icon-192.png" width="96" alt="">
+
 # ทริปด้วยกัน (Trip Itinerary)
 
 เว็บแอปวางแผนทริปกับเพื่อน (UI ภาษาไทย)
@@ -35,6 +37,11 @@
    - หรือเปิดหน้าแอปแล้ววาง URL ในหน้าตั้งค่าครั้งแรก (จำไว้เฉพาะเครื่องนั้น)
 
 ถ้าแก้ `Code.gs` ภายหลัง: Deploy → Manage deployments → Edit → Version: New version → Deploy (URL เดิมใช้ต่อได้)
+
+## เพิ่มเป็นแอปบนมือถือ
+
+- iPhone: เปิดลิงก์ใน Safari → ปุ่มแชร์ → Add to Home Screen
+- Android: เปิดใน Chrome → เมนู ⋮ → Add to Home screen / Install app
 
 ## ข้อควรรู้
 
