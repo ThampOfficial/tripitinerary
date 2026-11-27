@@ -611,7 +611,7 @@ function joinSheet(pre){
     const inp=f.querySelector('#jc');inp.focus();f.querySelector('#cx').onclick=closeSheet;
     const find=async()=>{const code=inp.value.trim().toUpperCase();if(code.length<6){f.querySelector('#jres').innerHTML='<p class="err small">ใส่รหัสให้ครบ 6 ตัว</p>';return}
       f.querySelector('#jres').innerHTML='<p class="hint">กำลังค้นหา…</p>';
-      try{const snap=await S.db.collection('trips').where('inviteCode','==',code).limit(1).get();
+      try{const q=()=>S.db.collection('trips').where('inviteCode','==',code).limit(1).get();let snap;try{snap=await q()}catch(e1){await new Promise(r=>setTimeout(r,1500));snap=await q()}
         if(snap.empty){f.querySelector('#jres').innerHTML='<p class="err small">ไม่พบทริปที่ใช้รหัสนี้ ตรวจรหัสกับผู้ชวนอีกครั้ง</p>';return}
         const d=snap.docs[0],t={id:d.id,...d.data()};
         if((t.members||[]).includes(S.uid)){closeSheet();go('t-'+t.id);return}
@@ -627,7 +627,7 @@ function joinSheet(pre){
             else ps.push({id:'p'+gid(),name:f.querySelector('#nn').value.trim()||'เพื่อน',uid:S.uid});
             await S.db.doc('trips/'+t.id).update({people:ps,members:[...new Set([...(fresh.members||[]),S.uid])]});
             closeSheet();toast('เข้าร่วมทริปแล้ว');go('t-'+t.id)}catch(err){ok.disabled=false;writeErr(err)}};
-      }catch(err){f.querySelector('#jres').innerHTML='<p class="err small">ค้นหาไม่สำเร็จ ลองอีกครั้ง</p>'}};
+      }catch(err){console.error(err);f.querySelector('#jres').innerHTML='<p class="err small">ค้นหาไม่สำเร็จ ลองอีกครั้ง</p>'+(err&&err.message?'<p class="hint small">'+esc(String(err.message))+'</p>':'')}};
     f.querySelector('#ok').onclick=find;inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();f.querySelector('#ok').click()}});
     if(pre&&pre.length===6)find();});
 }
