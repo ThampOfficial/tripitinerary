@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>ทริปด้วยกัน</title>
+<title>Itinerary</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
@@ -99,8 +99,15 @@ a.btn{text-decoration:none;color:inherit}
 .day{display:flex;flex-direction:column;gap:8px}
 .day-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .day-n{font-family:var(--f-mono);font-size:12px;font-weight:600;background:var(--ink);color:var(--paper);border-radius:6px;padding:2px 7px;letter-spacing:.04em}
-.day-h h3{font-size:16px;flex:1;min-width:0}
-.stop{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:12px 14px;align-items:start}
+.day-h h3{font-size:16px;flex:1 1 150px;min-width:0}
+.stop{display:grid;grid-template-columns:66px 1fr;gap:10px;padding:12px 14px;align-items:start}
+.tin{width:100%;min-width:0;border:1px solid var(--line);background:var(--paper);font:600 14px var(--f-mono);color:var(--ink);padding:5px 6px;border-radius:8px;text-align:center}
+.tin:focus{outline:2px solid color-mix(in srgb,var(--accent) 50%,transparent);border-color:var(--accent)}
+.eta{display:block;font:600 12px var(--f-mono);color:var(--accent);margin-top:4px}
+.stayt{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.3}
+.tag.late{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
+.legbox{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:10px;background:var(--soft);font-size:13.5px}
+.legbox b{font-family:var(--f-mono)}
 .stop + .stop{border-top:1px solid var(--line)}
 .stop .time{font-family:var(--f-mono);font-size:13px;color:var(--muted);padding-top:2px}
 .stop .nm{font-weight:600;font-size:15.5px;line-height:1.35;word-break:break-word}
@@ -250,6 +257,30 @@ textarea.inp{min-height:70px;resize:vertical}
 <div id="layer"></div>
 
 <script>
+/* ---------- language (ไทย / English) ---------- */
+const LANG=(()=>{try{return localStorage.getItem('tripLang')||'th'}catch(e){return 'th'}})();
+const LOC=LANG==='en'?'en-GB':'th-TH';
+const EN_DICT={"ลิงก์ Google Maps หรือพิกัด":"Google Maps link or coordinates","ดูใน Google Maps":"View in Google Maps","เปิดใน Google Maps":"Open in Google Maps","เงินที่แต่ละคนโอนเข้ากองกลางก่อนเที่ยว จะถูกหักออกจากยอดที่ต้องจ่ายตอนสรุป ค่าใช้จ่ายที่จ่ายจากกองกลางให้เลือกคนจ่ายเป็น": "Money each person puts into the kitty before the trip is deducted from what they owe at the end. For costs paid from the kitty, choose the payer", "ใส่ค่าตั๋ว ค่าที่พักที่จองไว้แล้ว และค่าใช้จ่ายระหว่างทริป ระบุคนจ่ายและคนที่หาร แล้วแอปจะสรุปยอดให้ตอนจบทริป": "Add tickets, booked stays and costs during the trip. Say who paid and who splits it, and the app will settle up at the end", "มีค่าใช้จ่ายหรือเงินกองกลางอยู่ ถ้าลบ รายการเหล่านั้นจะไม่นับยอดของเขา และการหารจะเปลี่ยน ลบต่อหรือไม่": "has costs or kitty money. If removed, those items won't count for them and the split will change. Remove anyway", "ถ้าแลกเงินมาแล้ว ใส่อัตราที่แลกจริงได้เลย เปลี่ยนอัตราเมื่อไหร่ ยอดทุกรายการคำนวณใหม่ทันที": "If you've already exchanged money, use the rate you got. Change a rate and every total recalculates right away", "เก็บรูปตั๋ว ใบยืนยันการจอง ประกันเดินทาง หรือหน้าพาสปอร์ตไว้ที่นี่ ให้ทุกคนในทริปเปิดดูได้": "Keep ticket photos, booking confirmations or travel insurance here for everyone on the trip", "บันทึกลิงก์ไว้ เปิดได้จากปุ่มแผนที่ (ลิงก์ย่อจะไม่มีพิกัดสำหรับเส้นทาง จะใช้ชื่อสถานที่แทน": "Link saved; open it from the Map button (short links have no coordinates, so the place name is used", "เมื่อเพิ่มค่าใช้จ่ายแล้ว หน้านี้จะแสดงยอดตามหมวด ยอดของแต่ละคน และใครต้องโอนให้ใครเท่าไร": "Once you add costs, this page shows totals by category, by person, and who pays whom", "ทริปที่คุณสร้างหรือได้รับเชิญจะแสดงที่นี่ พร้อมแผนเที่ยว ค่าใช้จ่าย และสรุปยอดของแต่ละคน": "Trips you create or join appear here, with the plan, costs and each person's totals", "สร้างทริปแรก แล้วส่งรหัสเชิญให้เพื่อน หรือใส่รหัสที่เพื่อนส่งมาเพื่อเข้าร่วมทริปของเขา": "Create your first trip and send the invite code to friends, or enter a friend's code to join their trip", "เพิ่มคนที่ยังไม่ได้ใช้แอปได้ เมื่อเขาเข้าร่วมด้วยรหัส จะเลือกชื่อตัวเองจากรายการนี้": "You can add people who don't use the app yet. When they join with the code, they pick their name from this list", "ตรวจเวลาเปิด-ปิดและราคาอีกครั้งก่อนไป พิกัดเป็นค่าประมาณ ใช้คำนวณระยะทางคร่าว ๆ ได้": "Check opening hours and prices before you go. Coordinates are approximate, good for rough distances", "ข้อมูลทริปเปิดดูได้โดยทุกคนที่เปิดหน้านี้ได้ แชร์หน้านี้เฉพาะเพื่อนร่วมทริป": "Anyone who can open this page can see the trips. Share it only with people on the trip", "แผนเที่ยวทุกวันตามลำดับ พร้อมเวลา ระยะทาง รายละเอียด รูปอ้างอิง และลิงก์": "Every day of the plan in order, with times, distances, details, reference photos and links", "กดเลือกสกุลอื่นที่จะใช้ เช่น เยน แล้วใส่อัตราแลกเปลี่ยนได้ในแท็บทริป": "Tap other currencies you'll use, e.g. yen, then set exchange rates in the Trip tab", "รหัสเดิมจะใช้เข้าร่วมไม่ได้อีก คนที่อยู่ในทริปแล้วไม่ได้รับผลกระทบ": "The old code will stop working. People already on the trip aren't affected", "ทุกคนที่มีลิงก์เชิญหรือรหัสเปิดทริปนี้ได้ ส่งเฉพาะเพื่อนร่วมทริป": "Anyone with the invite link or code can open this trip. Send it only to people on the trip", "ชื่อของคุณยังอยู่ในรายการค่าใช้จ่าย เข้าร่วมใหม่ได้ด้วยรหัสเชิญ": "Your name stays on the costs. You can rejoin with the invite code", "เพื่อนกดลิงก์ในข้อความแล้วเลือกชื่อตัวเองได้เลย ไม่ต้องล็อกอิน": "Friends tap the link and pick their name. No login needed", "ให้จัดที่เที่ยวยอดนิยมพร้อมเวลามาให้ก่อน แล้วค่อยแก้ทีหลัง": "to get popular places with times first, then edit later", "พื้นที่เก็บข้อมูลเต็ม ลองลบไฟล์หรือรายการเก่าที่ไม่ใช้แล้ว": "Storage is full. Try deleting old files or items", "เช่น ชอบธรรมชาติ ถ่ายรูปสวย ไปกับเด็ก ไม่อยากขับรถขึ้นดอย": "e.g. likes nature, photo spots, travelling with kids, no mountain driving", "ยังคำนวณระยะทางไม่ได้ ใส่ลิงก์หรือพิกัดของทั้งสองจุดก่อน": "Can't work out the distance yet. Add a link or coordinates for both places first", "บันทึกลิงก์ไว้ ตอนกดบันทึก แอปจะอ่านตำแหน่งจากลิงก์ให้": "Link saved. When you press Save, the app reads the location from it", "ในแท็บทริป เพื่อให้รายการโอนระบุชื่อคนแทนคำว่ากองกลาง": "in the Trip tab so transfers name a person instead of the kitty", "ถ้าลบ รายการเหล่านั้นจะไม่ถูกนับในยอดรวมจนกว่าจะเพิ่ม": "If removed, those items won't count in totals until you add", "รายการในสกุลนี้จึงยังไม่ถูกนับในยอดรวม ใส่ได้ที่แท็บ": "so items in this currency aren't counted in totals yet. Set it in the tab", "คุณดูได้อย่างเดียว ขอให้เจ้าของแชร์หน้านี้ให้คุณแบบ": "You can only view. Ask the owner to share this page with you as", "ยังเชื่อมต่อที่เก็บข้อมูลไม่ได้ ข้อมูลอาจไม่ล่าสุด": "Can't reach storage yet. Data may be out of date", "ยังบันทึกไม่ได้: เจ้าของต้องแชร์หน้านี้ให้คุณแบบ": "Can't save yet: the owner must share this page with you as", "ไม่พบทริปที่ใช้รหัสนี้ ตรวจรหัสกับผู้ชวนอีกครั้ง": "No trip uses this code. Check it with the person who invited you", "มีหน้าต่างบันทึกไฟล์เปิดอยู่ ปิดก่อนแล้วลองใหม่": "A save window is already open. Close it and try again", "ก่อน แล้วเปิดลิงก์นี้อีกครั้งเพื่อดูทริปของคุณ": "first, then open this link again to see your trips", "เลือกได้หลายรูปพร้อมกัน แต่ละรูปใส่คำอธิบายได้": "Pick several photos at once. Each can have a caption", "แอปจะแปลงอัตราที่มีให้ ตรวจอีกครั้งหลังเปลี่ยน": "The app converts existing rates. Check them after changing", "หน้านี้บันทึกไฟล์บนอุปกรณ์นี้ไม่ได้ ลองเปิดใน": "This page can't save files on this device. Try opening it in", "แนบได้เฉพาะรูปภาพ (ระบบจะย่อขนาดให้อัตโนมัติ": "Images only (resized automatically", "ถี่เกินไปหรือโควตาเต็ม รอสักครู่แล้วลองใหม่": "too often or the quota is used up. Wait a moment and try again", "ผังจากพิกัดของแต่ละจุด เส้นประคือระยะประมาณ": "Sketch from each stop's coordinates. Dashed lines are estimates", "ตั้งวันเริ่มและวันกลับของทริปในแท็บทริปก่อน": "Set the trip's start and end dates in the Trip tab first", "หรือพิกัด แล้วแอปจะแสดงแผนที่และระยะทางให้": "or coordinates, and the app shows the map and distances", "หรือเปิดลิงก์ให้ใช้งานได้ จากนั้นเพื่อนกด": "or open the link for use, then friends tap", "ของคุณและของเพื่อนร่วมทริป เปิดลิงก์จาก": "for you and your trip mates. Open the link from", "เวลาเปิด-ปิด เบอร์โทร รหัสเข้าห้อง ฯลฯ": "Opening hours, phone, door code, etc.", "เพิ่มจุดเที่ยว ที่พัก หรือที่จอดรถเอง": "Add sights, stays or parking yourself", "เพื่อนต้องเปิดหน้านี้ได้ด้วย: กดปุ่ม": "Friends must be able to open this page too: press", "ที่นี่มีอะไร ต้องดูอะไร ห้ามพลาดอะไร": "What's here, what to see, what not to miss", "รายการอยู่ รายการเหล่านั้นจะแสดงเป็น": "items. They will show as", "ยอดที่กำหนดเองยังไม่เท่ากับจำนวนเงิน": "The custom amounts don't add up to the total", "จุดแรกของวัน ไม่มีการเดินทางก่อนหน้า": "First stop of the day, no travel before it", "ไฟล์ชนิดนี้แนบไม่ได้ ใช้รูปภาพหรือ": "This file type can't be attached. Use an image or", "สร้างเสร็จแล้ว ยืนยันการบันทึกไฟล์": "Ready. Confirm saving the file", "คั่นด้วยจุลภาค เช่น ต้น, แพร, บอล": "Separate with commas, e.g. Ton, Prae, Ball", "อยากได้แบบไหนเป็นพิเศษ (ไม่บังคับ": "Any special wishes (optional", "ไม่ตอบคำขอนี้ ลองเปลี่ยนคำอธิบาย": "won't answer this. Try different wording", "จุดยังไม่มีพิกัด จึงไม่อยู่ในผัง": "stops have no coordinates, so they're not in the sketch", "ทุกคนจ่ายครบแล้ว ไม่ต้องโอนเพิ่ม": "Everyone's settled. No transfers needed", "กดค้างที่ข้อความแล้วเลือกคัดลอก": "Press and hold the text, then choose Copy", "ทุกคนในทริปจะไม่เห็นทริปนี้อีก": "Nobody on the trip will see it again", "ยังไม่ได้ใส่อัตราแลกเปลี่ยนของ": "No exchange rate yet for", "ที่พัก (จุดสุดท้ายของแต่ละวัน": "Stay (last stop each day", "ตอบกลับมาไม่ครบ ลองกดอีกครั้ง": "reply was incomplete. Try again", "กดลิงก์นี้แล้วเลือกชื่อตัวเอง": "Tap this link and pick your name", "ร้านอาหาร (มื้อกลางวัน / เย็น": "Restaurants (lunch / dinner", "ยอดรวมและการหารเงินจะแสดงเป็น": "Totals and splits will show in", "ใช้สรุปยอดและหารเงินตอนจบทริป": "Used for totals and the end-of-trip split", "เลขที่การจอง เวลาเช็กอิน ฯลฯ": "Booking number, check-in time, etc.", "บนอุปกรณ์นี้ไม่ได้ ลองเปิดใน": "on this device. Try opening it in", "จุดลงแผนแล้ว แก้ไขต่อได้เลย": "stops to the plan. Edit away", "จัดแผนไม่สำเร็จ ลองอีกครั้ง": "Couldn't make a plan. Try again", "เช่น ตั๋วเครื่องบิน กรุงเทพ": "e.g. Flight Bangkok", "บันทึกไม่สำเร็จ ลองอีกครั้ง": "Couldn't save. Try again", "ยอดรวมและการหารเงินคิดเป็น": "Totals and splits are in", "เพื่อสร้างหรือเข้าร่วมทริป": "to create or join trips", "เงินกองกลาง / จ่ายล่วงหน้า": "Kitty / paid in advance", "คุณไม่ได้อยู่ในทริปนี้แล้ว": "You're no longer on this trip", "ค้นหาไม่สำเร็จ ลองอีกครั้ง": "Search failed. Try again", "ตั๋ว การจอง และไฟล์อ้างอิง": "Tickets, bookings and reference files", "บัญชีนี้แนบได้เฉพาะรูปภาพ": "This account can attach images only", "หรือแอปธนาคาร เช่น ค้นว่า": "or your bank app, e.g. search", "ใส่สรุปค่าใช้จ่ายท้ายเล่ม": "Add a cost summary at the end", "ต้องกดอนุญาตให้หน้านี้ใช้": "Allow this page to use", "แอปนี้เก็บทริปไว้ในบัญชี": "This app keeps trips in the account", "แล้วพิมพ์ลงช่องด้านล่าง": "and type them below", "ตอนนี้เรียงตามที่จัดเอง": "Currently in your own order", "อัตโนมัติ (ตามลำดับเวลา": "Automatic (by time", "ยกเลิกการบันทึกไฟล์แล้ว": "File save cancelled", "ไม่มีรายการในตัวกรองนี้": "No items for this filter", "เลือกสกุลเงินที่จะเพิ่ม": "Choose a currency to add", "คนอื่นในทริป (ไม่บังคับ": "Other people (optional", "นี้บนเครื่องนี้ แล้วใส่": "on this device and enter", "ไฟล์ที่แนบในรายการอื่น": "Files attached elsewhere", "กำลังคิดแผน อาจใช้เวลา": "is planning, this may take", "ลบรายการเงินกองกลางนี้": "Delete this kitty entry", "คัดลอกข้อความชวนเพื่อน": "Copy invite message", "เลือกคนที่หารอย่างน้อย": "Choose at least", "ใบเสร็จ / ตั๋ว / ไฟล์": "Receipts / tickets / files", "ใช้เป็นคนจ่ายและคนหาร": "used as payers and splitters", "เช่น เชียงใหม่ ปีใหม่": "e.g. Chiang Mai New Year", "บันทึกเงินเข้ากองกลาง": "Add money to the kitty", "ไม่สำเร็จ ลองอีกครั้ง": "failed. Try again", "ไม่มีสถานที่ในหมวดนี้": "No places in this category", "ระยะทางและเวลาเดินทาง": "Distance and travel time", "ยังไม่ได้เลือกสถานที่": "No places selected", "รู้ล่วงหน้า (จอง/ตั๋ว": "Known ahead (bookings/tickets", "ค่าใช้จ่ายรวมทั้งทริป": "Total trip cost", "เช่น โอนเข้าบัญชีแพร": "e.g. transferred to Prae", "ไม่ใช่ลิงก์หรือพิกัด": "Not a link or coordinates", "ยังไม่มีสถานที่ในแผน": "No places in the plan yet", "จุดที่ยังไม่กำหนดวัน": "stops with no day", "ติ๊กออกที่ไม่อยากได้": "untick what you don't want", "กำลังคำนวณเส้นทางจาก": "Calculating route with", "ไม่มีจุดสำหรับวันนี้": "No stops for this day", "น้ำมัน/ทางด่วน/จอดรถ": "Fuel/tolls/parking", "บันทึกยอดนี้ให้ทุกคน": "Record this amount for everyone", "บนเบราว์เซอร์หรือแอป": "in a browser or the app", "แล้วคัดลอกลิงก์มาวาง": "and paste the link", "ยังไม่ได้ใส่ระยะทาง": "No distance yet", "กำลังเปิดทริปของคุณ": "Opening your trips", "อัปโหลดรูปไม่สำเร็จ": "Photo upload failed", "ที่อยู่ / จุดสังเกต": "Address / landmark", "ยังไม่มีอะไรให้สรุป": "Nothing to summarise yet", "เปลี่ยนสกุลหลักเป็น": "Change main currency to", "กลับมา ลบต่อหรือไม่": "back. Remove anyway", "เช่น ใบยืนยันโรงแรม": "e.g. Hotel confirmation", "ใช้จากกองกลางไปแล้ว": "spent from the kitty", "ยังไม่มีเงินกองกลาง": "No kitty money yet", "กำลังเตรียมตัวอักษร": "Preparing fonts", "หมวดหมู่ค่าใช้จ่าย": "Cost categories", "ดูระยะทางและเวลาใน": "See distance and time in", "คุณคือใครในทริปนี้": "Who are you on this trip", "แล้วเชิญเพื่อนเป็น": "and invite friends as", "เงินกองกลางอยู่กับ": "Kitty held by", "ยังไม่มีค่าใช้จ่าย": "No costs yet", "ไปไม่ทันเวลา ช้าไป": "Won't make it, late by", "อยู่ที่นี่กี่นาที": "Minutes here", "ค่าเข้าชม/กิจกรรม": "Entry/activities", "ใส่ได้ที่แท็บทริป": "set it in the Trip tab", "ดอลลาร์นิวซีแลนด์": "New Zealand dollar", "โหลดทริปไม่สำเร็จ": "Couldn't load trip", "ชวนเพื่อนเข้าทริป": "Invite friends", "อาหาร/เครื่องดื่ม": "Food/drinks", "ดอลลาร์ออสเตรเลีย": "Australian dollar", "เพื่อคำนวณเวลาถึง": "to work out arrival", "ส่วนที่แต่ละคนใช้": "Each person's share", "อัปโหลดไม่สำเร็จ": "Upload failed", "เวลาถึงโดยประมาณ": "Estimated arrival", "คงเหลือในกองกลาง": "Left in the kitty", "เร็วกว่าที่ไปทัน": "is earlier than you can get there", "ดูอัตราล่าสุดจาก": "Get the latest rate from", "จากหน้านี้ไม่ได้": "from this page", "ส่งข้อความนี้ทาง": "Send this via", "เพื่อเริ่มใช้งาน": "to get started", "ช่วยวางแผนเที่ยว": "plan the trip", "แก้ไขเงินกองกลาง": "Edit kitty entry", "บันทึกข้อมูลทริป": "Save trip details", "เลขที่การจอง ฯลฯ": "Booking number, etc.", "เข้าร่วมทริปแล้ว": "Joined the trip", "ชื่อของคุณในทริป": "Your name on the trip", "เป็นจุดแรกของวัน": "First stop of the day", "กำลังรวมเป็นไฟล์": "Building the file", "เรียงตามเวลาแล้ว": "Sorted by time", "เข้าร่วมด้วยรหัส": "Join with code", "เริ่มวันละกี่โมง": "Daily start time", "คนถือเงินกองกลาง": "Kitty holder", "เช่น ดอยอินทนนท์": "e.g. Doi Inthanon", "สกุลเงินของทริป": "Trip currencies", "เช่น ลานจอดชั้น": "e.g. parking level", "ใช้งานได้) ก่อน": "can use) first", "บันทึกอัตราแล้ว": "Rate saved", "เกิดระหว่างทริป": "During the trip", "เปลี่ยนเวลาเป็น": "Time changed to", "กำลังอัปโหลดรูป": "Uploading photo", "เปลี่ยนชื่อหมวด": "Rename category", "ช้อปปิ้ง/ของฝาก": "Shopping/souvenirs", "ถึงที่นี่ประมาณ": "arrive here around", "เพิ่มค่าใช้จ่าย": "Add cost", "ดอลลาร์สิงคโปร์": "Singapore dollar", "แก้ไขค่าใช้จ่าย": "Edit cost", "หมวดหมู่สถานที่": "Place categories", "ต้องเข้าสู่ระบบ": "You need to sign in to", "หรือแชทไหนก็ได้": "or any chat", "คัดลอกส่งในแชท": "Copy for chat", "แยกตามสกุลเงิน": "By currency", "ไฟล์อื่น (ตั๋ว": "Other files (tickets", "เช่น เชียงใหม่": "e.g. Chiang Mai", "เลือกอย่างน้อย": "Choose at least", "แล้วใส่รหัสนี้": "and enter this code", "เวอร์ชันล่าสุด": "latest version", "จุดแวะพัก/ปั๊ม": "Rest stop/gas", "ยังไม่กำหนดวัน": "No day set", "ดอลลาร์ไต้หวัน": "Taiwan dollar", "ยังไม่มีเอกสาร": "No documents yet", "เส้นทางทั้งวัน": "Day route", "สรุปค่าใช้จ่าย": "Cost summary", "ที่กดได้ในไฟล์": "you can tap in the file", "ยังไม่เข้าร่วม": "Not joined", "ประมาณจากพิกัด": "estimated from coordinates", "จากจุดก่อนหน้า": "from previous stop", "และไฟล์ในนั้น": "and its files", "ดอลลาร์แคนาดา": "Canadian dollar", "สร้างทริปใหม่": "New trip", "ยอดของแต่ละคน": "Each person's balance", "ใส่รหัสให้ครบ": "Enter all", "สร้างรหัสใหม่": "New code", "ทริปไม่มีชื่อ": "Untitled trip", "ออกจากจุดนั้น": "Leave there", "ออกจากทริปนี้": "Leave this trip", "สถานที่เที่ยว": "Sights", "ก่อน ถึงจะใช้": "first to use", "ใส่รูปอ้างอิง": "Include reference photos", "ค่าใช้จ่ายของ": "Costs for", "คัดลอกข้อความ": "Copy text", "เปิดหน้านี้ใน": "Open this page in", "ลงชื่อเข้าใช้": "Sign in to", "ไม่ระบุวันที่": "No date", "ยังไม่มีอัตรา": "No rate yet", "กำลังโหลดทริป": "Loading trip", "กำลังเขียนแผน": "is writing the plan", "ดอลลาร์ฮ่องกง": "Hong Kong dollar", "เรียงตามเวลา": "Sort by time", "เข้าร่วมแล้ว": "Joined", "ที่เชื่อมไว้": "connected", "ของหน้านี้ใน": "for this page in", "กำลังจัดหน้า": "Laying out", "เงินล่วงหน้า": "Paid in", "เพิ่มสถานที่": "Add place", "ยังไม่มีทริป": "No trips yet", "รายการที่ใช้": "items using", "หักสำรองจ่าย": "minus paid", "เข้าร่วมทริป": "Join trip", "ไม่พบทริปนี้": "Trip not found", "ดูผังเส้นทาง": "Show sketch", "แก้ไขสถานที่": "Edit place", "ชื่อหมวดใหม่": "New category name", "ใครโอนให้ใคร": "Who pays whom", "ไฟล์ใหญ่เกิน": "File larger than", "ดอลลาร์สหรัฐ": "US dollar", "ใส่จำนวนเงิน": "Enter an amount", "กำลังอัปโหลด": "Uploading", "กำลังโหลดรูป": "Loading photos", "คำอธิบายรูป": "Caption", "ชื่อสถานที่": "Place name", "เวลาเดินทาง": "Travel time", "แก้ไขเอกสาร": "Edit document", "กำลังเที่ยว": "On the trip", "ดูตัวเลขจาก": "Check the numbers in", "ระหว่างทริป": "During trip", "บัญชีนี้ใช้": "This account can't use", "อัตราที่ใช้": "Rate used", "รู้ล่วงหน้า": "Known ahead", "วางลิงก์จาก": "Paste a link from", "ผู้ร่วมทริป": "Travellers", "รูปใหญ่เกิน": "Photo larger than", "รวมทั้งทริป": "Trip total", "ทริปด้วยกัน": "ทริปด้วยกัน", "เพิ่มรายการ": "Add item", "ตามหมวดหมู่": "By category", "เปลี่ยนชื่อ": "Rename", "ทริปทั้งหมด": "All trips", "เพิ่มเอกสาร": "Add document", "มาจากที่ไหน": "Coming from", "เฉลี่ยต่อคน": "Per person", "ระยะทาง (กม": "Distance (km", "แล้วใส่รหัส": "and enter the code", "ใส่อะไรบ้าง": "Include", "หักล่วงหน้า": "minus paid in", "ยังไม่กำหนด": "Not set", "ชื่อคนเพิ่ม": "Name to add", "ตั๋วเดินทาง": "Transport tickets", "เพิ่มลงแผน": "Add to plan", "มาร่วมทริป": "Join the trip", "บันทึกเงิน": "Add money", "จะไปที่ไหน": "Where to", "ใส่เวลาของ": "Set the time of", "ชื่อเอกสาร": "Document name", "ช่วยวางแผน": "Plan with", "ลบเวลาแล้ว": "Time cleared", "จัดการทริป": "Manage trip", "เวลาที่ใส่": "the time entered", "สรุปจบทริป": "End-of-trip settlement", "ซ่อนแผนที่": "Hide map", "กำลังค้นหา": "Searching", "คัดลอกแล้ว": "Copied", "ลบทริปแล้ว": "Trip deleted", "ยอดครบแล้ว": "Amounts add up", "ผังเส้นทาง": "route sketch", "ใส่ระยะทาง": "Add distance", "หน้านี้ใช้": "This page can't use", "ส่วนที่ใช้": "Share", "ทริปของฉัน": "My trips", "รูปภาพหรือ": "Images or", "หารเท่ากัน": "Split equally", "รายละเอียด": "Details", "ใส่เวลาแบบ": "Enter time like", "กำลังเพิ่ม": "Adding", "รูปอ้างอิง": "Reference photos", "ฟรังก์สวิส": "Swiss franc", "เลื่อนขึ้น": "Move up", "เดินทางรวม": "Total travel", "ค่าใช้จ่าย": "Costs", "เลิกเชื่อม": "Disconnect", "บันทึกแล้ว": "Saved", "ออกจากทริป": "Leave trip", "ข้อมูลทริป": "Trip details", "ไม่มีหมวด": "No category", "กำลังจะไป": "Upcoming", "เชียงใหม่": "Chiang Mai", "ยังขาดอีก": "Still short by", "ถึงประมาณ": "Arrive ~", "จำนวนเงิน": "Amount", "ค้นหาทริป": "Find trip", "เหลือจ่าย": "Owes", "ดาวน์โหลด": "Download", "สร้างทริป": "Create trip", "ลบหรือไม่": "Delete it", "ลบทริปนี้": "Delete this trip", "ออกจากแผน": "from the plan", "รอสักครู่": "Please wait", "สำรองจ่าย": "Paid for others", "ร้านอาหาร": "Restaurant", "ที่เที่ยว": "Sight", "ข้อมูลจาก": "Info from", "หรือพิกัด": "or coordinates", "แผนเที่ยว": "Plan", "รหัสเชิญ": "Invite code", "ลบเอกสาร": "Delete document", "วางลิงก์": "Paste a link", "หมายเหตุ": "Notes", "เลื่อนลง": "Move down", "เพิ่มรูป": "Add photo", "ชื่อทริป": "Trip name", "ดูแผนที่": "Show map", "ชื่อใหม่": "New name", "ที่จอดรถ": "Parking", "วันเริ่ม": "Start date", "หยุดแล้ว": "Stopped", "สกุลเงิน": "Currencies", "กำหนดเอง": "Custom", "สกุลหลัก": "Main currency", "ตามรายคน": "By person", "ล่วงหน้า": "Ahead", "รูเปียห์": "rupiah", "ชื่อเล่น": "Nickname", "หมวดหมู่": "Category", "คนในทริป": "People", "ได้แล้ว": "found", "แนบไฟล์": "Attach", "ซ่อนผัง": "Hide sketch", "ตั้งแต่": "From", "สถานที่": "Place", "กิจกรรม": "activities", "ใช้เวลา": "Use", "หรือแอป": "or the app", "ครบแล้ว": "Settled", "ใครจ่าย": "Who paid", "ทั้งหมด": "All", "พบพิกัด": "Found coordinates", "กองกลาง": "Kitty", "ไม่ระบุ": "None", "ที่อยู่": "Address", "ล้างค่า": "Clear", "จัดใหม่": "Try again", "คงเหลือ": "Balance", "เปิดแอป": "Open the app", "ต่อไฟล์": "per file", "ตั้งค่า": "Setup", "ชั่วโมง": "Hours", "ทุกหมวด": "All categories", "เวลาของ": "Time for", "ดีแรห์ม": "dirham", "เปลี่ยน": "Change", "ใช้อยู่": "In use", "วันกลับ": "End date", "สรุปยอด": "Summary", "ไม่เกิน": "up to", "โอนให้": "pays", "บันทึก": "Save", "ลบทริป": "Delete trip", "จัดแผน": "Plan it", "จุดนี้": "This place", "แผนที่": "Map", "เพื่อน": "Friend", "วันที่": "Day", "ยกเลิก": "Cancel", "เข้าชม": "entry", "การโอน": "Transfers", "หรือกด": "or press", "เที่ยว": "trip", "ลบสกุล": "Remove currency", "ได้คืน": "Gets back", "พบทริป": "Trip found", "สวัสดี": "Hello", "คนจ่าย": "Paid by", "ลบแล้ว": "Deleted", "ริงกิต": "ringgit", "เปิดใน": "Open in", "ลบไฟล์": "Remove file", "จังหวะ": "Pace", "ลบหมวด": "Delete category", "วินาที": "seconds", "จบแล้ว": "Finished", "รายการ": "items", "ที่พัก": "Stay", "หารกับ": "Split with", "แผนจาก": "Plan from", "เอกสาร": "Docs", "ยืนยัน": "Confirm", "มาจาก": "From", "ลิงก์": "link", "เรียล": "riel", "อัตรา": "Rate", "สร้าง": "Create", "อาหาร": "Food", "เพิ่ม": "Add", "เหลือ": "left", "คาเฟ่": "Café", "ลบรูป": "Remove photo", "อื่นๆ": "Other", "ใช้ไป": "spent", "ปอนด์": "pound", "แก้ไข": "Edit", "หยุด": "Stop", "เวลา": "Time", "แชร์": "Share", "กลับ": "Back", "แล้ว": "", "เป็น": "as", "คนละ": "Each", "ใหม่": "New", "รูปี": "rupee", "หรือ": "or", "ยูโร": "euro", "ทริป": "Trip", "หมวด": "categories", "หยวน": "yuan", "ดูใน": "View in", "อยู่": "Stay", "แน่น": "Packed", "ช่อง": "spot", "จ่าย": "Pay", "นาที": "min", "ตั๋ว": "Tickets", "เปโซ": "peso", "ไฟล์": "files", "ชื่อ": "Name", "เช่น": "e.g.", "ปกติ": "Normal", "ตัว": "characters", "เยน": "yen", "ใช้": "Used", "ด่ง": "dong", "ปิด": "Close", "ให้": "for", "รวม": "Total", "ได้": "", "พัก": "stay", "วอน": "won", "ชิล": "Relaxed", "จุด": "stops", "รูป": "photos", "กัน": "", "รับ": "in", "วัน": "days", "ถึง": "To", "หาร": "Split", "บาท": "baht", "ฉัน": "me", "กีบ": "kip", "ใน": "in", "ชม": "hr", "กม": "km", "ลบ": "Delete", "กด": "press", "มี": "has", "คน": "people", "ม": "m"};
+const THAI_RE=/[\u0E01-\u0E3A\u0E40-\u0E5B]/;
+const EN_RE=new RegExp(Object.keys(EN_DICT).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'g');
+const EN_FULL={'วัน':'Day','วันที่':'Day','เวลา':'Time'};
+function tr(s){if(LANG!=='en'||s==null)return s;s=String(s);if(!THAI_RE.test(s))return s;const ft=EN_FULL[s.trim()];if(ft)return s.replace(s.trim(),ft);const o=s.replace(EN_RE,m=>EN_DICT[m]);return THAI_RE.test(o)?s:o.replace(/ {2,}/g,' ').replace(/ ([,.:)])/g,'$1')}
+function trNode(root){if(LANG!=='en')return;
+  const skip=n=>{for(let e=n.parentElement;e;e=e.parentElement){if(/^(SCRIPT|STYLE|TEXTAREA)$/.test(e.tagName))return true}return false};
+  if(root.nodeType===3){if(THAI_RE.test(root.nodeValue)&&!skip(root)){const v=tr(root.nodeValue);if(v!==root.nodeValue)root.nodeValue=v}return}
+  if(root.nodeType!==1)return;
+  const els=[root,...root.querySelectorAll('[placeholder],[title],[aria-label]')];
+  els.forEach(el=>['placeholder','title','aria-label'].forEach(a=>{const v=el.getAttribute&&el.getAttribute(a);if(v&&THAI_RE.test(v)){const t=tr(v);if(t!==v)el.setAttribute(a,t)}}));
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;const list=[];while((n=w.nextNode()))if(THAI_RE.test(n.nodeValue))list.push(n);
+  list.forEach(n=>{if(skip(n))return;const v=tr(n.nodeValue);if(v!==n.nodeValue)n.nodeValue=v})}
+if(LANG==='en'){document.documentElement.lang='en';
+  new MutationObserver(ms=>ms.forEach(m=>{if(m.type==='characterData')trNode(m.target);else m.addedNodes.forEach(trNode)})).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  document.addEventListener('DOMContentLoaded',()=>trNode(document.body))}
+function setLang(l){try{localStorage.setItem('tripLang',l)}catch(e){}location.reload()}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-lang]');if(b)setLang(b.dataset.lang)});
+const langBtn=()=>LANG==='en'?'<button class="btn sm" data-lang="th" title="ภาษาไทย">ไทย</button>':'<button class="btn sm" data-lang="en" title="English">EN</button>';
+</script>
+<script>
 /* ---------- icons ---------- */
 const I={
 plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -275,7 +306,7 @@ link:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const gid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-5);
-const fmt=n=>(Math.round((+n||0)*100)/100).toLocaleString('th-TH',{minimumFractionDigits:0,maximumFractionDigits:2});
+const fmt=n=>(Math.round((+n||0)*100)/100).toLocaleString(LOC,{minimumFractionDigits:0,maximumFractionDigits:2});
 const CURS={THB:['฿','บาท'],JPY:['¥','เยน'],KRW:['₩','วอน'],CNY:['¥','หยวน'],TWD:['NT$','ดอลลาร์ไต้หวัน'],HKD:['HK$','ดอลลาร์ฮ่องกง'],SGD:['S$','ดอลลาร์สิงคโปร์'],MYR:['RM','ริงกิต'],VND:['₫','ด่ง'],LAK:['₭','กีบ'],KHR:['៛','เรียล'],IDR:['Rp','รูเปียห์'],PHP:['₱','เปโซ'],INR:['₹','รูปี'],USD:['$','ดอลลาร์สหรัฐ'],EUR:['€','ยูโร'],GBP:['£','ปอนด์'],CHF:['CHF','ฟรังก์สวิส'],AUD:['A$','ดอลลาร์ออสเตรเลีย'],NZD:['NZ$','ดอลลาร์นิวซีแลนด์'],CAD:['C$','ดอลลาร์แคนาดา'],AED:['AED','ดีแรห์ม']};
 const curSym=c=>(CURS[c]||[c])[0];
 const curName=c=>CURS[c]?`${c} · ${CURS[c][1]}`:c;
@@ -296,7 +327,7 @@ const pcolor=i=>PALETTE[i%PALETTE.length];
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 function toDate(s){if(!s)return null;const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)}
 function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function dlabel(s,opt){const d=toDate(s);return d?d.toLocaleDateString('th-TH',opt||{weekday:'short',day:'numeric',month:'short'}):''}
+function dlabel(s,opt){const d=toDate(s);return d?d.toLocaleDateString(LOC,opt||{weekday:'short',day:'numeric',month:'short'}):''}
 function todayIso(){return iso(new Date())}
 function tripDays(t){const s=toDate(t.start),e=toDate(t.end);if(!s)return[];const out=[];const end=e&&e>=s?e:s;for(let d=new Date(s),i=0;d<=end&&i<90;d.setDate(d.getDate()+1),i++)out.push(iso(d));return out}
 function code6(){const a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<6;i++)s+=a[Math.floor(Math.random()*a.length)];return s}
@@ -315,7 +346,7 @@ function writeErr(e){console.error(e);
   if(e&&e.code==='invalid_argument')toast('ยังบันทึกไม่ได้: เจ้าของต้องแชร์หน้านี้ให้คุณแบบ Contributor (ใช้งานได้) ก่อน',4200);
   else if(e&&e.code==='quota_exceeded')toast('พื้นที่เก็บข้อมูลเต็ม ลองลบไฟล์หรือรายการเก่าที่ไม่ใช้แล้ว',4200);
   else toast('บันทึกไม่สำเร็จ ลองอีกครั้ง');}
-async function copyText(txt){try{await navigator.clipboard.writeText(txt);toast('คัดลอกแล้ว');return true}catch(e){
+async function copyText(txt){txt=String(txt).split('\n').map(tr).join('\n');try{await navigator.clipboard.writeText(txt);toast('คัดลอกแล้ว');return true}catch(e){
   openSheet('คัดลอกข้อความ',`<p class="hint">กดค้างที่ข้อความแล้วเลือกคัดลอก</p><textarea class="inp" id="cpy" rows="8" readonly>${esc(txt)}</textarea>`,el=>{const t=el.querySelector('#cpy');t.focus();t.select()});return false}}
 
 /* ---------- people & cats ---------- */
@@ -429,7 +460,7 @@ const pairKey=(a,b)=>ptQ(a)+'>'+ptQ(b);
 function legOf(prev,p){if(p.legFrom===prev.id&&(isSet(p.legKm)||isSet(p.legMin)))return{km:p.legKm,min:p.legMin,manual:true};
   const A=S.autoLegs&&S.autoLegs[pairKey(prev,p)];if(A&&A.ok)return{km:A.m/1000,min:Math.round(A.s/60),manual:false,auto:true};
   if(hasLoc(prev)&&hasLoc(p)){const d=hav(prev,p)*1.3;return{km:d,min:Math.round(d/45*60+5),manual:false}}return null}
-const kmTxt=k=>(+k).toLocaleString('th-TH',{maximumFractionDigits:+k<10?1:0})+' กม.';
+const kmTxt=k=>(+k).toLocaleString(LOC,{maximumFractionDigits:+k<10?1:0})+' กม.';
 const minTxt=m=>{m=Math.round(+m);if(m<60)return m+' นาที';const h=Math.floor(m/60),r=m%60;return h+' ชม.'+(r?' '+r+' นาที':'')};
 const legUrl=(a,b)=>'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(ptQ(a))+'&destination='+encodeURIComponent(ptQ(b));
 function legRow(prev,p){const L=legOf(prev,p);
@@ -525,7 +556,7 @@ function renderNoRuntime(msg){
 /* ---------- home ---------- */
 function renderHome(){
   $('#tabs').hidden=true;
-  $('#topInner').innerHTML=`<h1>ทริปด้วยกัน</h1><button class="btn sm" id="hJoin">${I.link}เข้าร่วมด้วยรหัส</button>`;
+  $('#topInner').innerHTML=`<h1>ทริปด้วยกัน</h1>${langBtn()}<button class="btn sm" id="hJoin">${I.link}เข้าร่วมด้วยรหัส</button>`;
   $('#hJoin').onclick=()=>joinSheet('');
   const v=$('#view');
   if(!S.db){return}
@@ -605,7 +636,7 @@ function renderTripTop(){
   const t=S.trip;
   $('#topInner').innerHTML=`<button class="iconbtn" aria-label="ทริปทั้งหมด" id="bk">${I.back}</button>
     <div style="flex:1;min-width:0"><h1>${esc(t.name)}</h1><div class="sub num">${esc(dlabel(t.start,{day:'numeric',month:'short'}))} – ${esc(dlabel(t.end,{day:'numeric',month:'short',year:'2-digit'}))} · ${people().length} คน</div></div>
-    <span class="avs">${people().slice(0,4).map((p,i)=>avatar(p,i)).join('')}</span>`;
+    ${langBtn()}<span class="avs">${people().slice(0,4).map((p,i)=>avatar(p,i)).join('')}</span>`;
   $('#bk').onclick=()=>go('');
 }
 function renderTabs(){
@@ -658,6 +689,18 @@ function rmapBlock(arr,hl){if(SA){const u=gmapEmbed(arr);if(!u)return'';return `
   const svg=routeMapSVG(arr,hl);if(!svg)return'';const miss=arr.filter(p=>!hasLoc(p)).length;
   return `<div class="rwrap">${svg}<div class="hint">ผังจากพิกัดของแต่ละจุด เส้นประคือระยะประมาณ${miss?` · ${miss} จุดยังไม่มีพิกัด จึงไม่อยู่ในผัง`:''}</div></div>`}
 
+/* ---------- day timeline: arrival = previous departure + travel ---------- */
+const normTime=v=>{v=String(v||'').trim().replace(/[.\s]/g,':');if(!v)return '';let m=v.match(/^(\d{1,2}):(\d{1,2})$/)||v.match(/^(\d{1,2})(\d{2})$/)||v.match(/^(\d{1,2})$/);if(!m)return null;const h=+m[1],mi=+(m[2]||0);if(h>23||mi>59)return null;return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')};
+const tMin=t=>{if(!t)return null;const [h,m]=String(t).split(':').map(Number);return isNaN(h)?null:h*60+(m||0)};
+const tHm=x=>{x=((Math.round(x)%1440)+1440)%1440;return String(Math.floor(x/60)).padStart(2,'0')+':'+String(x%60).padStart(2,'0')};
+function timeline(arr){const out={};let dep=null;
+  arr.forEach((p,i)=>{const L=i>0?legOf(arr[i-1],p):null;let eta=null;
+    if(dep!=null&&L&&isSet(L.min))eta=dep+(+L.min);
+    const fixed=tMin(p.time),at=fixed!=null?fixed:eta;
+    out[p.id]={eta,late:fixed!=null&&eta!=null&&eta>fixed+5?Math.round(eta-fixed):0,arrive:at,depart:at!=null?at+(+p.stay||0):null};
+    dep=out[p.id].depart});
+  return out}
+
 /* ---------- PLAN ---------- */
 function renderPlan(v){
   const cats=placeCats(),days=tripDays(S.trip);
@@ -671,7 +714,7 @@ function renderPlan(v){
     ${cats.map(c=>`<button class="chip" data-f="${esc(c.id)}" aria-pressed="${S.placeFilter===c.id}"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}${counts[c.id]?` <span class="muted num">${counts[c.id]}</span>`:''}</button>`).join('')}</div>
    ${!S.places.length?`<div class="card empty">${I.pin}<strong>ยังไม่มีสถานที่ในแผน</strong><span>เพิ่มจุดเที่ยว ที่พัก หรือที่จอดรถเอง ${SA?'วางลิงก์ Google Maps หรือพิกัด แล้วแอปจะแสดงแผนที่และระยะทางให้':'หรือกด "AI ช่วยวางแผน" ให้จัดที่เที่ยวยอดนิยมพร้อมเวลามาให้ก่อน แล้วค่อยแก้ทีหลัง'}</span></div>`:''}
    ${S.places.length&&!list.length?`<div class="empty">ไม่มีสถานที่ในหมวดนี้</div>`:''}
-   ${keys.map(k=>{const arr=groups[k].sort(sortFor(k));const idx=days.indexOf(k);const showLegs=S.placeFilter==='all';let tk=0,tm=0,est=false,anyLeg=false;
+   ${keys.map(k=>{const arr=groups[k].sort(sortFor(k));const idx=days.indexOf(k);const showLegs=S.placeFilter==='all';const TL=showLegs?timeline(arr):{};let tk=0,tm=0,est=false,anyLeg=false;
      if(showLegs)for(let i=1;i<arr.length;i++){const L=legOf(arr[i-1],arr[i]);if(L){anyLeg=true;tk+=+L.km||0;tm+=+L.min||0;if(!L.manual&&!L.auto)est=true}}
      return `<section class="day"><div class="day-h">${k?`<span class="day-n">วันที่ ${idx+1}</span><h3>${esc(dlabel(k,{weekday:'long',day:'numeric',month:'short'}))}</h3>`:`<h3>ยังไม่กำหนดวัน</h3>`}
        ${anyLeg?`<span class="daytot">${est?'≈ ':''}รวม <b>${kmTxt(tk)}</b> · <b>${minTxt(tm)}</b></span>`:''}
@@ -679,8 +722,8 @@ function renderPlan(v){
        ${showLegs&&(SA?arr.length:arr.some(hasLoc))?`<button class="btn sm" data-rmap="${esc(k)}">${S.mapHide[dkey(k)]?(SA?'ดูแผนที่':'ดูผังเส้นทาง'):(SA?'ซ่อนแผนที่':'ซ่อนผัง')}</button>`:''}
        ${arr.length>1?`<a class="btn sm" href="${esc(routeUrl(arr))}" target="_blank" rel="noopener">${I.route}เส้นทางทั้งวัน</a>`:''}</div>
        ${showLegs&&!S.mapHide[dkey(k)]?rmapBlock(arr):''}
-       <div class="card">${arr.map((p,i)=>{const c=catOf(cats,p.cat);return `${showLegs&&i>0?legRow(arr[i-1],p):''}<div class="stop" data-pid="${esc(p.id)}"><div class="time">${esc(p.time||'—')}</div><div style="min-width:0">
-         <div class="nm">${showLegs?`<span class="pinno${hasLoc(p)?'':' none'}">${i+1}</span>`:''}${esc(p.name)}</div><div class="meta"><span class="tag"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}</span>${(p.files||[]).length?`<span class="tag">${I.clip.replace('<svg','<svg width="12" height="12"')} ${(p.files||[]).length}</span>`:''}${placeCostTag(p)}</div>
+       <div class="card">${arr.map((p,i)=>{const c=catOf(cats,p.cat);return `${showLegs&&i>0?legRow(arr[i-1],p):''}<div class="stop" data-pid="${esc(p.id)}"><div class="time"><input class="tin" type="text" inputmode="numeric" maxlength="5" placeholder="--:--" data-tin id="tin-${esc(p.id)}" value="${esc(p.time||'')}" aria-label="เวลาของ ${esc(p.name)}">${TL[p.id]&&TL[p.id].eta!=null&&!p.time?`<span class="eta" title="เวลาถึงโดยประมาณ">~${tHm(TL[p.id].eta)}</span>`:''}${+p.stay?`<span class="stayt">อยู่ ${minTxt(p.stay)}</span>`:''}</div><div style="min-width:0">
+         <div class="nm">${showLegs?`<span class="pinno${hasLoc(p)?'':' none'}">${i+1}</span>`:''}${esc(p.name)}</div><div class="meta"><span class="tag"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}</span>${(p.files||[]).length?`<span class="tag">${I.clip.replace('<svg','<svg width="12" height="12"')} ${(p.files||[]).length}</span>`:''}${placeCostTag(p)}${TL[p.id]&&TL[p.id].late?`<span class="tag late">ไปไม่ทันเวลา ช้าไป ~${minTxt(TL[p.id].late)}</span>`:''}${TL[p.id]&&TL[p.id].eta!=null&&p.time&&!TL[p.id].late?`<span class="tag">ถึงประมาณ ${tHm(TL[p.id].eta)}</span>`:''}</div>
          ${p.address?`<div class="note">${esc(p.address)}</div>`:''}${p.desc?`<div class="desc">${esc(p.desc)}</div>`:''}
          ${galleryView(p.photos)}${p.note?`<div class="note">${esc(p.note)}</div>`:''}
          ${filesView(p.files)}
@@ -693,6 +736,7 @@ function renderPlan(v){
   v.querySelectorAll('[data-leg]').forEach(row=>{const p=S.places.find(x=>x.id===row.dataset.leg),prev=S.places.find(x=>x.id===row.dataset.prev);row.querySelector('[data-legedit]').onclick=()=>legSheet(prev,p)});
   v.querySelectorAll('.stop').forEach(row=>{const p=S.places.find(x=>x.id===row.dataset.pid);
     row.querySelector('[data-edit]').onclick=()=>placeSheet(p);
+    row.querySelector('[data-tin]').onchange=async e=>{const v=normTime(e.target.value);if(v===null){toast('ใส่เวลาแบบ 09:30');e.target.value=p.time||'';return}e.target.value=v;if(v===(p.time||''))return;try{await S.db.doc(`trips/${S.tripId}/places/${p.id}`).update({time:v,updatedAt:Date.now()});toast(v?'เปลี่ยนเวลาเป็น '+v:'ลบเวลาแล้ว')}catch(x){writeErr(x)}};
     row.querySelector('[data-exp]').onclick=()=>placeCostSheet(p);
     row.querySelector('[data-share]').onclick=()=>copyText([p.name,catOf(cats,p.cat).name+(p.day?' · '+dlabel(p.day):'')+(p.time?' '+p.time:''),p.address,openUrl(p)].filter(Boolean).join('\n'));
     row.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>movePlace(p,+b.dataset.mv,groups[days.includes(p.day)?p.day:''].sort(sortFor(days.includes(p.day)?p.day:''))));
@@ -721,6 +765,9 @@ function placeSheet(p){
    <div class="field"><span class="lbl">หมวดหมู่</span><div class="chips" id="pc" style="flex-wrap:wrap">${cats.map(c=>`<button type="button" class="chip" data-c="${esc(c.id)}" aria-pressed="${(p?p.cat:cats[0]?.id)===c.id}"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}</button>`).join('')}</div></div>
    <div class="grid2"><div class="field"><label for="pd">วัน</label><select class="inp" id="pd"><option value="">ยังไม่กำหนด</option>${days.map((d,i)=>`<option value="${d}" ${p?.day===d?'selected':''}>วันที่ ${i+1} · ${esc(dlabel(d))}</option>`).join('')}</select></div>
    <div class="field"><label for="pt">เวลา</label><input class="inp" type="time" id="pt" value="${esc(p?.time||'')}"></div></div>
+   <div class="grid2"><div class="field"><label for="pfrom">มาจากที่ไหน</label><select class="inp" id="pfrom"></select></div>
+   <div class="field"><label for="pstay">อยู่ที่นี่กี่นาที</label><input class="inp num" id="pstay" inputmode="numeric" value="${+p?.stay?esc(p.stay):''}" placeholder="เช่น 60"></div></div>
+   <div id="pleg"></div>
    <div class="field"><label for="pl">ลิงก์ Google Maps หรือพิกัด</label><input class="inp" id="pl" value="${esc(p?.url||(p&&p.lat!=null&&p.lat!==''?p.lat+','+p.lng:''))}" placeholder="วางลิงก์จาก Google Maps หรือ 18.5887, 98.4867"><div id="pmap"></div><span class="hint" id="plh">กด "แชร์" ใน Google Maps แล้วคัดลอกลิงก์มาวาง</span></div>
    <div class="field"><label for="pa">ที่อยู่ / จุดสังเกต</label><input class="inp" id="pa" value="${esc(p?.address||'')}" placeholder="เช่น ลานจอดชั้น B2 ช่อง 14"></div>
    <div class="field"><label for="pdesc">รายละเอียด</label><textarea class="inp" id="pdesc" rows="4" placeholder="ที่นี่มีอะไร ต้องดูอะไร ห้ามพลาดอะไร">${esc(p?.desc||'')}</textarea></div>
@@ -733,14 +780,34 @@ function placeSheet(p){
     const pl=f.querySelector('#pl'),plh=f.querySelector('#plh');
     const chk=()=>{const v=pl.value.trim();if(!v){plh.className='hint';plh.textContent='กด "แชร์" ใน Google Maps แล้วคัดลอกลิงก์มาวาง';return}
       const g=parseLoc(v);if(g.lat!=null){plh.className='hint ok';plh.textContent=`พบพิกัด ${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}`}else if(/^https?:/.test(v)){plh.className='hint';plh.textContent=SA?'บันทึกลิงก์ไว้ ตอนกดบันทึก แอปจะอ่านตำแหน่งจากลิงก์ให้':'บันทึกลิงก์ไว้ เปิดได้จากปุ่มแผนที่ (ลิงก์ย่อจะไม่มีพิกัดสำหรับเส้นทาง จะใช้ชื่อสถานที่แทน)'}else{plh.className='hint err';plh.textContent='ไม่ใช่ลิงก์หรือพิกัด'}};
-    const drawPm=()=>{const g=parseLoc(pl.value.trim()),day=f.querySelector('#pd').value,t=f.querySelector('#pt').value;
-      const cand={...(p||{}),id:p?.id||'_new',name:f.querySelector('#pn').value.trim()||'จุดนี้',lat:g.lat??null,lng:g.lng??null,time:t,day};
-      if(!hasLoc(cand)){f.querySelector('#pmap').innerHTML='';return}
-      if(!p||p.day!==day||cand.order==null)cand.order=orderFor(day,t,cand.id);
-      const arr=[...S.places.filter(x=>(x.day||'')===day&&x.id!==cand.id),cand].sort(sortFor(day));
-      f.querySelector('#pmap').innerHTML=rmapBlock(arr,cand.id)};
+    const q=s=>f.querySelector(s);
+    const others=day=>S.places.filter(x=>(x.day||'')===day&&x.id!==p?.id).sort(sortFor(day));
+    const fillFrom=()=>{const day=q('#pd').value,cur=q('#pfrom').value;const l=others(day);
+      q('#pfrom').innerHTML=`<option value="">อัตโนมัติ (ตามลำดับเวลา)</option><option value="_start">เป็นจุดแรกของวัน</option>`+l.map(x=>`<option value="${esc(x.id)}">${esc((x.time?x.time+' · ':'')+x.name)}</option>`).join('');
+      if([...q('#pfrom').options].some(o=>o.value===cur))q('#pfrom').value=cur};
+    let legSeq=0;
+    const drawPm=()=>{const g=parseLoc(pl.value.trim()),day=q('#pd').value,t=q('#pt').value,from=q('#pfrom').value;
+      const cand={...(p||{}),id:p?.id||'_new',name:q('#pn').value.trim()||'จุดนี้',lat:g.lat??(p&&pl.value.trim()===(p.url||'')?p.lat:null),lng:g.lng??(p&&pl.value.trim()===(p.url||'')?p.lng:null),url:/^https?:/.test(pl.value.trim())?pl.value.trim():'',time:t,day,stay:parseInt(q('#pstay').value)||0};
+      const l=others(day);let prev=null;
+      if(from==='_start')prev=null;else if(from)prev=l.find(x=>x.id===from)||null;
+      else{if(!p||p.day!==day||cand.order==null)cand.order=orderFor(day,t,cand.id);const arr=[...l,cand].sort(sortFor(day));const i=arr.indexOf(cand);prev=i>0?arr[i-1]:null}
+      const pts=prev?[prev,cand]:[cand];
+      q('#pmap').innerHTML=(SA?ptQ(cand):hasLoc(cand))?rmapBlock(pts,cand.id):'';
+      const box=q('#pleg');if(!prev){box.innerHTML=from==='_start'?'<div class="legbox">จุดแรกของวัน ไม่มีการเดินทางก่อนหน้า</div>':'';return}
+      const dep=(timeline(l)[prev.id]||{}).depart;
+      const show=L=>{if(!L||!isSet(L.min)){box.innerHTML=`<div class="legbox">มาจาก <b style="font-family:inherit">${esc(prev.name)}</b><span class="hint">ยังคำนวณระยะทางไม่ได้ ใส่ลิงก์หรือพิกัดของทั้งสองจุดก่อน</span></div>`;return}
+        const at=dep!=null?dep+(+L.min):null;
+        box.innerHTML=`<div class="legbox"><span>มาจาก <b style="font-family:inherit">${esc(prev.name)}</b>: ${L.auto||L.manual?'':'≈ '}<b>${isSet(L.km)?kmTxt(L.km):''}</b> · <b>${minTxt(L.min)}</b>${L.auto?' (Google Maps)':L.manual?'':' (ประมาณจากพิกัด)'}</span>
+          ${at!=null?`<span>ออกจากจุดนั้น ~<b>${tHm(dep)}</b> → ถึงที่นี่ประมาณ <b>${tHm(at)}</b>${t&&tMin(t)<at-5?` <span class="err">(เวลาที่ใส่ ${esc(t)} เร็วกว่าที่ไปทัน)</span>`:''}</span>
+          <div class="row"><button type="button" class="btn sm" id="useEta">ใช้เวลา ${tHm(at)}</button></div>`:`<span class="hint">ใส่เวลาของ ${esc(prev.name)} เพื่อคำนวณเวลาถึง</span>`}</div>`;
+        const u=q('#useEta');if(u)u.onclick=()=>{q('#pt').value=tHm(at);drawPm()}};
+      const k=pairKey(prev,cand),A=S.autoLegs[k];
+      if(SA&&window.TRIP_ROUTE&&!A&&ptQ(prev)&&ptQ(cand)){box.innerHTML='<div class="legbox hint">กำลังคำนวณเส้นทางจาก Google Maps…</div>';const my=++legSeq;
+        window.TRIP_ROUTE([[ptQ(prev),ptQ(cand)]],'driving').then(r=>{S.autoLegs[k]=r[0]||{ok:false}}).catch(()=>{}).finally(()=>{if(my===legSeq)show(legOf(prev,cand))})}
+      else show(legOf(prev,cand))};
+    fillFrom();q('#pd').addEventListener('change',()=>{fillFrom();drawPm()});q('#pfrom').onchange=drawPm;q('#pstay').oninput=drawPm;
     pl.oninput=()=>{chk();drawPm()};chk();drawPm();
-    ['#pd','#pt'].forEach(s=>f.querySelector(s).addEventListener('change',drawPm));f.querySelector('#pn').addEventListener('change',drawPm);
+    f.querySelector('#pt').addEventListener('change',drawPm);f.querySelector('#pn').addEventListener('change',drawPm);
     attachWidget(f.querySelector('#pf'),files);
     photoWidget(f.querySelector('#pph'),photos);
     f.querySelector('#cx').onclick=closeSheet;
@@ -752,8 +819,13 @@ function placeSheet(p){
       const day=f.querySelector('#pd').value;
       const data={name,cat:cat||'',day,time:f.querySelector('#pt').value,url:/^https?:\/\//.test(raw)?raw:'',lat:g.lat??null,lng:g.lng??null,
         address:f.querySelector('#pa').value.trim(),desc:f.querySelector('#pdesc').value.trim(),note:f.querySelector('#pnote').value.trim(),
+        stay:parseInt(f.querySelector('#pstay').value)||0,
         files,photos:photos.map(x=>({...x,cap:(x.cap||'').trim()})),updatedAt:Date.now()};
-      if(!p||p.day!==day)data.order=orderFor(day,data.time,p?.id);if(!p){data.createdBy=S.uid;data.createdAt=Date.now()}
+      const from=f.querySelector('#pfrom').value;
+      if(from){f.querySelector('#ok').disabled=true;try{const l=others(day);const ix=from==='_start'?-1:l.findIndex(x=>x.id===from);
+          for(const [k2,x] of l.entries())if((x.order??-1)!==k2*10)await S.db.doc(`trips/${S.tripId}/places/${x.id}`).update({order:k2*10});
+          data.order=ix*10+5;if(!isManual(day))await setManual(day,true)}catch(e){writeErr(e);f.querySelector('#ok').disabled=false;return}}
+      else if(!p||p.day!==day)data.order=orderFor(day,data.time,p?.id);if(!p){data.createdBy=S.uid;data.createdAt=Date.now()}
       f.querySelector('#ok').disabled=true;
       try{if(p)await S.db.doc(`trips/${S.tripId}/places/${p.id}`).update(data);else await S.db.doc(`trips/${S.tripId}/places/${'pl'+gid()}`).set(data);
         if(p)cleanupFiles([...(p.files||[]),...(p.photos||[])],[...files,...photos]);closeSheet();toast('บันทึกแล้ว')}catch(e){f.querySelector('#ok').disabled=false;writeErr(e)}};});
@@ -774,8 +846,8 @@ Include: ${inc.join('; ')}.
 Pick places that really exist and that most visitors love (well-known, highly rated). Group nearby places on the same day and order each day's stops to keep travel short. Leave realistic travel time between stops when setting times.
 ${o.wish?'Traveller wishes: '+o.wish+'\n':''}${o.existing.length?'Already in their plan, do not repeat: '+o.existing.join(', ')+'\n':''}
 Reply with ONLY JSON in exactly this shape:
-{"days":[{"day":1,"stops":[{"name":"Place name","type":"attraction","time":"09:00","desc":"1-2 short sentences in Thai: why go, what to see or order, a practical tip","area":"district or neighbourhood","lat":18.8048,"lng":98.9216}]}]}
-Rules: "type" is one of attraction, food, cafe, hotel. "time" is the arrival time HH:MM (24h). Use the name locals and maps use (for Thailand write the Thai name; elsewhere the local or English name). "desc" must be in Thai. lat/lng approximate to 4 decimals, or null if unsure. Exactly ${o.dates.length} day objects.`}
+{"days":[{"day":1,"stops":[{"name":"Place name","type":"attraction","time":"09:00","desc":"1-2 short sentences in ${LANG==='en'?'English':'Thai'}: why go, what to see or order, a practical tip","area":"district or neighbourhood","lat":18.8048,"lng":98.9216}]}]}
+Rules: "type" is one of attraction, food, cafe, hotel. "time" is the arrival time HH:MM (24h). Use the name locals and maps use (for Thailand write the Thai name; elsewhere the local or English name). "desc" must be in ${LANG==='en'?'English':'Thai'}. lat/lng approximate to 4 decimals, or null if unsure. Exactly ${o.dates.length} day objects.`}
 function aiSheet(){
   const days=tripDays(S.trip);if(!days.length){toast('ตั้งวันเริ่มและวันกลับของทริปในแท็บทริปก่อน');return}
   const st={pace:'normal',plan:null,ctl:null};
@@ -854,7 +926,7 @@ function wrapText(ctx,text,maxW){const out=[];
       while(ctx.measureText(line).width>maxW&&line.length>1){let i=line.length;while(i>1&&ctx.measureText(line.slice(0,i)).width>maxW)i--;out.push(line.slice(0,i));line=line.slice(i)}}
     out.push(line)}
   return out}
-function ptext(ctx,draw,str,x,y,maxW,size,weight,fam,color,lh,maxLines){ctx.font=`${weight} ${size}px ${fam}`;let lines=wrapText(ctx,str,maxW);
+function ptext(ctx,draw,str,x,y,maxW,size,weight,fam,color,lh,maxLines){str=tr(str);ctx.font=`${weight} ${size}px ${fam}`;let lines=wrapText(ctx,str,maxW);
   if(maxLines&&lines.length>maxLines){lines=lines.slice(0,maxLines);lines[maxLines-1]=lines[maxLines-1].replace(/.{0,2}$/,'…')}
   lh=lh||Math.round(size*1.55);
   if(draw){ctx.fillStyle=color;ctx.textBaseline='alphabetic';lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh+Math.round(size*1.12)))}
@@ -894,7 +966,7 @@ async function buildPdf(opt,progress){
   if(opt.photos){const all=[];S.places.forEach(p=>{(p.photos||[]).forEach(f=>all.push(f));(p.files||[]).filter(f=>(f.type||'').startsWith('image/')).forEach(f=>all.push(f))});
     for(const [i,f] of all.entries()){progress(`กำลังโหลดรูป ${i+1}/${all.length}`);imgMap.set(f.id,await loadImage(await blobSrc(f)))}}
   const pages=[];let ctx,y,cur;
-  const newPage=()=>{const c=document.createElement('canvas');c.width=PW;c.height=PH;ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,PW,PH);cur={c,links:[]};pages.push(cur);y=PM};
+  const newPage=()=>{const c=document.createElement('canvas');c.width=PW;c.height=PH;ctx=c.getContext('2d');if(LANG==='en'){const f=ctx.fillText,m=ctx.measureText;ctx.fillText=function(t,...a){return f.call(this,tr(t),...a)};ctx.measureText=function(t){return m.call(this,tr(t))}}ctx.fillStyle='#fff';ctx.fillRect(0,0,PW,PH);cur={c,links:[]};pages.push(cur);y=PM};
   const room=()=>PH-PM-50-y;
   const place=(fn,keepNext)=>{const h=fn(false,y)+(keepNext?keepNext(false,0):0);if(h>room()&&y>PM)newPage();fn(true,y);y+=fn(false,y)};
   newPage();
