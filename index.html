@@ -357,7 +357,8 @@ const pIndex=id=>Math.max(0,people().findIndex(p=>p.id===id));
 const placeCats=()=>(S.trip&&S.trip.placeCats)||[];
 const expCats=()=>(S.trip&&S.trip.expCats)||[];
 const catOf=(list,id)=>list.find(c=>c.id===id)||{id,name:'ไม่มีหมวด',color:'#8A9A95'};
-const myPerson=()=>people().find(p=>p.uid===S.uid);
+const isMe=p=>!!p&&!!S.uid&&(p.uid===S.uid||(p.uids||[]).includes(S.uid));
+const myPerson=()=>people().find(isMe);
 function avatar(p,i){const n=(p.name||'?').trim();return `<span class="av" style="background:${pcolor(i)}" title="${esc(n)}">${esc(n.slice(0,1))}</span>`}
 
 /* ---------- sheet / confirm / lightbox ---------- */
@@ -614,15 +615,15 @@ function joinSheet(pre){
         if(snap.empty){f.querySelector('#jres').innerHTML='<p class="err small">ไม่พบทริปที่ใช้รหัสนี้ ตรวจรหัสกับผู้ชวนอีกครั้ง</p>';return}
         const d=snap.docs[0],t={id:d.id,...d.data()};
         if((t.members||[]).includes(S.uid)){closeSheet();go('t-'+t.id);return}
-        const free=(t.people||[]).filter(p=>!p.uid);
+        const all=t.people||[],firstFree=all.findIndex(p=>!p.uid);
         f.querySelector('#jres').innerHTML=`<div class="card pad stack"><div><span class="eyebrow">พบทริป</span><h3>${esc(t.name)}</h3><span class="muted small">${esc(dlabel(t.start))} – ${esc(dlabel(t.end))}</span></div>
           <div class="field"><span class="lbl">คุณคือใครในทริปนี้</span><div class="checks">
-          ${free.map((p,i)=>`<label class="check"><input type="radio" name="who" value="${esc(p.id)}" ${i===0?'checked':''}><span>${esc(p.name)}</span><span></span></label>`).join('')}
-          <label class="check"><input type="radio" name="who" value="_new" ${free.length?'':'checked'}><span>ชื่อใหม่</span><input class="inp" id="nn" style="width:140px;text-align:left" value="${esc((S.me&&S.me.name)||'')}" placeholder="ชื่อเล่น"></label></div></div></div>`;
+          ${all.map((p,i)=>`<label class="check"><input type="radio" name="who" value="${esc(p.id)}" ${i===firstFree?'checked':''}><span>${esc(p.name)}</span>${p.uid?'<span class="tag">เข้าร่วมแล้ว · เลือกได้ถ้าเป็นคุณ</span>':'<span></span>'}</label>`).join('')}
+          <label class="check"><input type="radio" name="who" value="_new" ${firstFree<0&&!all.length?'checked':''}><span>ชื่อใหม่</span><input class="inp" id="nn" style="width:140px;text-align:left" value="${esc((S.me&&S.me.name)||'')}" placeholder="ชื่อเล่น"></label></div></div></div>`;
         const ok=f.querySelector('#ok');ok.textContent='เข้าร่วมทริป';ok.onclick=async()=>{
-          const who=(f.querySelector('input[name=who]:checked')||{}).value;ok.disabled=true;
+          const who=(f.querySelector('input[name=who]:checked')||{}).value;if(!who){toast('เลือกชื่อของคุณก่อน');return}ok.disabled=true;
           try{const fresh=(await S.db.doc('trips/'+t.id).get()).data();const ps=[...(fresh.people||[])];
-            if(who&&who!=='_new'){const p=ps.find(x=>x.id===who);if(p&&!p.uid)p.uid=S.uid;else ps.push({id:'p'+gid(),name:f.querySelector('#nn').value.trim()||'เพื่อน',uid:S.uid})}
+            if(who&&who!=='_new'){const p=ps.find(x=>x.id===who);if(p){if(!p.uid)p.uid=S.uid;else if(p.uid!==S.uid)p.uids=[...new Set([...(p.uids||[]),S.uid])]}else ps.push({id:'p'+gid(),name:f.querySelector('#nn').value.trim()||'เพื่อน',uid:S.uid})}
             else ps.push({id:'p'+gid(),name:f.querySelector('#nn').value.trim()||'เพื่อน',uid:S.uid});
             await S.db.doc('trips/'+t.id).update({people:ps,members:[...new Set([...(fresh.members||[]),S.uid])]});
             closeSheet();toast('เข้าร่วมทริปแล้ว');go('t-'+t.id)}catch(err){ok.disabled=false;writeErr(err)}};
@@ -1105,7 +1106,7 @@ function expenseSheet(e,pre){pre=pre||{};
    <div class="grid2"><div class="field"><label for="ea">จำนวนเงิน</label><div class="row" style="flex-wrap:nowrap"><input class="inp num" id="ea" inputmode="decimal" value="${e?esc(e.amount):''}" placeholder="0" style="font-size:20px;min-width:0"><div style="width:112px;flex:none">${curSelect('ecur',e?(e.cur||'THB'):lastCur())}</div></div><span class="hint" id="econv"></span></div>
    <div class="field"><label for="ed">วันที่</label><input class="inp" type="date" id="ed" value="${esc(e?.date||pre.date||(todayIso()>=S.trip.start&&todayIso()<=S.trip.end?todayIso():(S.trip.start>todayIso()?todayIso():S.trip.start)))}"></div></div>
    <div class="field"><span class="lbl">หมวดหมู่</span><div class="chips" style="flex-wrap:wrap" id="ec">${cats.map(c=>`<button type="button" class="chip" data-c="${esc(c.id)}"><span class="dot" style="background:${esc(c.color)}"></span>${esc(c.name)}</button>`).join('')}</div></div>
-   <div class="field"><label for="ep">คนจ่าย</label><select class="inp" id="ep">${ps.map(p=>`<option value="${esc(p.id)}" ${(e?e.paidBy:me?.id)===p.id?'selected':''}>${esc(p.name)}${p.uid===S.uid?' (ฉัน)':''}</option>`).join('')}<option value="fund" ${e?.paidBy==='fund'?'selected':''}>กองกลาง</option></select></div>
+   <div class="field"><label for="ep">คนจ่าย</label><select class="inp" id="ep">${ps.map(p=>`<option value="${esc(p.id)}" ${(e?e.paidBy:me?.id)===p.id?'selected':''}>${esc(p.name)}${isMe(p)?' (ฉัน)':''}</option>`).join('')}<option value="fund" ${e?.paidBy==='fund'?'selected':''}>กองกลาง</option></select></div>
    <div class="field"><div class="spread"><span class="lbl">หารกับ</span><div class="seg" id="sp" style="min-width:200px"><button type="button" data-v="equal">หารเท่ากัน</button><button type="button" data-v="custom">กำหนดเอง</button></div></div>
      <div class="checks" id="am"></div><span class="hint" id="amh"></span></div>
    <div class="field"><label for="en">หมายเหตุ</label><textarea class="inp" id="en" placeholder="เลขที่การจอง ฯลฯ">${esc(e?.note||'')}</textarea></div>
@@ -1243,8 +1244,8 @@ function renderSettings(v){
      <div class="li"><select class="inp" id="newCur" style="flex:1;min-width:160px"><option value="">เลือกสกุลเงินที่จะเพิ่ม</option>${Object.keys(CURS).filter(c=>!tripCurs().includes(c)).map(c=>`<option value="${c}">${esc(curName(c))}</option>`).join('')}</select><button class="btn sm pri" id="addCur">${I.plus}เพิ่ม</button></div></div>
    <p class="hint" style="margin:0">ดูอัตราล่าสุดจาก Google หรือแอปธนาคาร เช่น ค้นว่า "1 JPY to THB" ถ้าแลกเงินมาแล้ว ใส่อัตราที่แลกจริงได้เลย เปลี่ยนอัตราเมื่อไหร่ ยอดทุกรายการคำนวณใหม่ทันที</p>
    <div class="section-h"><h2>คนในทริป</h2><span class="small muted">${ps.length} คน · ใช้เป็นคนจ่ายและคนหาร</span></div>
-   <div class="card list-edit">${ps.map((p,i)=>`<div class="li">${avatar(p,i)}<span class="grow">${esc(p.name)} ${p.uid===S.uid?'<span class="tag">ฉัน</span>':p.uid?'<span class="tag">เข้าร่วมแล้ว</span>':'<span class="tag">ยังไม่เข้าร่วม</span>'}</span>
-     <button class="btn sm" data-prn="${esc(p.id)}">เปลี่ยนชื่อ</button>${p.uid===S.uid?'':`<button class="btn sm danger" data-prm="${esc(p.id)}">ลบ</button>`}</div>`).join('')}
+   <div class="card list-edit">${ps.map((p,i)=>`<div class="li">${avatar(p,i)}<span class="grow">${esc(p.name)} ${isMe(p)?'<span class="tag">ฉัน</span>':p.uid?'<span class="tag">เข้าร่วมแล้ว</span>':'<span class="tag">ยังไม่เข้าร่วม</span>'}</span>
+     <button class="btn sm" data-prn="${esc(p.id)}">เปลี่ยนชื่อ</button>${isMe(p)?'':`<button class="btn sm danger" data-prm="${esc(p.id)}">ลบ</button>`}</div>`).join('')}
      <div class="li"><input class="inp" id="newP" placeholder="ชื่อคนเพิ่ม" style="flex:1"><button class="btn sm pri" id="addP2">${I.plus}เพิ่ม</button></div></div>
    ${catBlock('place','หมวดหมู่สถานที่',placeCats(),id=>{const n=S.places.filter(p=>p.cat===id).length;return n?n+' จุด':''})}
    ${catBlock('exp','หมวดหมู่ค่าใช้จ่าย',expCats(),id=>{const n=S.expenses.filter(e=>e.cat===id).length;return n?n+' รายการ':''})}
@@ -1280,7 +1281,7 @@ function renderSettings(v){
     try{const id=S.tripId;for(const c of ['places','expenses','deposits','docs']){for(const x of S[c]){await S.db.doc(`trips/${id}/${c}/${x.id}`).delete();for(const f of x.files||[]){try{if(f.k==='d')await S.db.doc(`trips/${id}/blobs/${f.id}`).delete();else if(S.assets)await S.assets.delete(f.id)}catch(e){}}}}
       await S.db.doc('trips/'+id).delete();toast('ลบทริปแล้ว');go('')}catch(e){writeErr(e)}});
   const lv=q('#leave');if(lv)lv.onclick=()=>confirmBox('ออกจากทริปนี้? ชื่อของคุณยังอยู่ในรายการค่าใช้จ่าย เข้าร่วมใหม่ได้ด้วยรหัสเชิญ','ออกจากทริป',async()=>{
-    if(await saveTrip({members:(t.members||[]).filter(m=>m!==S.uid),people:ps.map(p=>p.uid===S.uid?{...p,uid:null}:p)}))go('')});
+    if(await saveTrip({members:(t.members||[]).filter(m=>m!==S.uid),people:ps.map(p=>isMe(p)?{...p,uid:p.uid===S.uid?null:p.uid,uids:(p.uids||[]).filter(u=>u!==S.uid)}:p)}))go('')});
 }
 function renameSheet(title,cur,onSave){openSheet(title,`<div class="field"><label for="rn">ชื่อ</label><input class="inp" id="rn" value="${esc(cur)}"></div><div class="actions"><button type="button" class="btn" id="cx">ยกเลิก</button><button class="btn pri" id="ok">บันทึก</button></div>`,f=>{
   const i=f.querySelector('#rn');i.focus();i.select();f.querySelector('#cx').onclick=closeSheet;f.querySelector('#ok').onclick=async()=>{const n=i.value.trim();if(!n)return;closeSheet();await onSave(n)}})}
