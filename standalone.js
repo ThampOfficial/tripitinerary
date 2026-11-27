@@ -12,6 +12,13 @@
     del(k) { try { localStorage.removeItem(k); } catch (e) {} }
   };
   const API = () => (window.TRIP_API || store.get('tripApi') || '').trim();
+  const API_OK = u => /^https:\/\/script\.google\.com\/.+\/exec$/.test(u || '');
+  // invite links carry the backend URL, so friends who open one are connected without any setup
+  try {
+    const u = new URL(location.href), a = u.searchParams.get('api');
+    if (a && API_OK(a)) { store.set('tripApi', a); u.searchParams.delete('api'); history.replaceState(null, '', u.pathname + u.search + u.hash); }
+  } catch (e) {}
+  window.TRIP_INVITE_URL = code => location.origin + location.pathname + '?api=' + encodeURIComponent(API()) + '#join-' + code;
   const rid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
   async function call(action, payload) {
@@ -160,13 +167,14 @@
     if (!v) return;
     v.innerHTML = `<div class="card pad stack" style="margin-top:8px">
       <div><span class="eyebrow">ตั้งค่าครั้งแรก</span><h2 style="font-size:22px">เชื่อมกับ Google Sheet</h2></div>
-      <p style="margin:0">วาง Web app URL ของ Apps Script (ลงท้ายด้วย <span class="num">/exec</span>) ที่ได้จากขั้นตอน Deploy ใน README</p>
+      <p style="margin:0"><b>ถ้าเพื่อนชวนมา</b> ให้เปิดจากลิงก์เชิญที่เพื่อนส่งให้ จะเข้าได้เลยโดยไม่ต้องตั้งค่า</p>
+      <p style="margin:0">ถ้าคุณเป็นเจ้าของ วาง Web app URL ของ Apps Script (ลงท้ายด้วย <span class="num">/exec</span>) ที่ได้จากขั้นตอน Deploy ใน README</p>
       <div class="field"><label for="apiUrl">Web app URL</label><input class="inp num" id="apiUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${API().replace(/"/g, '&quot;')}"></div>
       <div class="hint err" id="apiMsg">${msg || ''}</div>
       <div class="row" style="justify-content:flex-end"><button class="btn pri" id="apiSave">เชื่อมต่อ</button></div></div>`;
     document.getElementById('apiSave').onclick = async () => {
       const u = document.getElementById('apiUrl').value.trim(), m = document.getElementById('apiMsg');
-      if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)) { m.textContent = 'URL ต้องขึ้นต้นด้วย https://script.google.com/ และลงท้ายด้วย /exec'; return; }
+      if (!API_OK(u)) { m.textContent = 'URL ต้องขึ้นต้นด้วย https://script.google.com/ และลงท้ายด้วย /exec'; return; }
       m.className = 'hint'; m.textContent = 'กำลังทดสอบ…';
       try {
         const r = await fetch(u); const j = await r.json();
